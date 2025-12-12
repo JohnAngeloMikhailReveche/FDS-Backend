@@ -6,102 +6,74 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Models;
+using NotificationService.Integration.Email; 
 
 namespace NotificationService.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/notifications")] // Adjusted route to match your docs
     [ApiController]
     public class NotificationServiceController : ControllerBase
     {
         private readonly NotificationContext _context;
+        private readonly GmailService _gmailService;
 
-        public NotificationServiceController(NotificationContext context)
+        public NotificationServiceController(NotificationContext context, GmailService gmailService)
         {
             _context = context;
+            _gmailService = gmailService;
         }
 
-        // GET: api/NotificationService
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Notification>>> GetNotifications()
         {
             return await _context.Notifications.ToListAsync();
         }
 
-        // GET: api/NotificationService/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Notification>> GetNotification(int id)
+        public async Task<ActionResult<Notification>> GetNotification(string id)
         {
-            var notification = await _context.Notifications.FindAsync(id);
+            var notification = await _context.Notifications.FirstOrDefaultAsync(n => n.Id.ToString() == id);
 
-            if (notification == null)
-            {
-                return NotFound();
-            }
+            if (notification == null) return NotFound();
 
             return notification;
         }
 
-        // PUT: api/NotificationService/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutNotification(int id, Notification notification)
-        {
-            if (id != notification.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(notification).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!NotificationExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/NotificationService
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        [HttpPost("notify")]
         public async Task<ActionResult<Notification>> PostNotification(Notification notification)
         {
+            if (string.IsNullOrEmpty(notification.Type) || string.IsNullOrEmpty(notification.Message))
+            {
+                return BadRequest("Type and Message are required.");
+            }
+
+            // EMAIL LOGIC
+            if (notification.Type.ToLower() == "email")
+            {
+                if (string.IsNullOrEmpty(notification.EmailAddress))
+                {
+                    return BadRequest("Email address is required.");
+                }
+
+                try
+                {
+                    await _gmailService.SendEmailAsync(notification.EmailAddress, notification.Title, notification.Message);
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"Failed to send email: {ex.Message}");
+                }
+            }
+
+            // Database Save Logic
+            if (string.IsNullOrEmpty(notification.Id)) notification.Id = Guid.NewGuid().ToString();
+            notification.CreatedAt = DateTime.UtcNow;
+            notification.Status = "unread";
+
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetNotification", new { id = notification.Id }, notification);
-        }
-
-        // DELETE: api/NotificationService/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteNotification(int id)
-        {
-            var notification = await _context.Notifications.FindAsync(id);
-            if (notification == null)
-            {
-                return NotFound();
-            }
-
-            _context.Notifications.Remove(notification);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool NotificationExists(int id)
-        {
-            return _context.Notifications.Any(e => e.Id == id);
         }
     }
 }
