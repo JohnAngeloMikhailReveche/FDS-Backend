@@ -6,28 +6,29 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Models;
+using NotificationService.DTOs;
 
 namespace NotificationService.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/notifications")]
     [ApiController]
     public class NotificationServiceController : ControllerBase
     {
-        private readonly NotificationContext _context;
+         private readonly NotificationContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public NotificationServiceController(NotificationContext context)
+        public NotificationServiceController(NotificationContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
-        // GET: api/NotificationService
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Notification>>> GetNotifications()
         {
             return await _context.Notifications.ToListAsync();
         }
 
-        // GET: api/NotificationService/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Notification>> GetNotification(int id)
         {
@@ -41,8 +42,6 @@ namespace NotificationService.Controllers
             return notification;
         }
 
-        // PUT: api/NotificationService/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutNotification(int id, Notification notification)
         {
@@ -72,8 +71,6 @@ namespace NotificationService.Controllers
             return NoContent();
         }
 
-        // POST: api/NotificationService
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Notification>> PostNotification(Notification notification)
         {
@@ -83,7 +80,6 @@ namespace NotificationService.Controllers
             return CreatedAtAction("GetNotification", new { id = notification.Id }, notification);
         }
 
-        // DELETE: api/NotificationService/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteNotification(int id)
         {
@@ -97,6 +93,27 @@ namespace NotificationService.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpGet("check-order/{id}")]
+        public async Task<ActionResult<OrderDTO>> GetOrderDetails(int id)
+        {
+            var client = _httpClientFactory.CreateClient("OrderService");
+            try 
+            {
+                var order = await client.GetFromJsonAsync<OrderDTO>($"/api/Orders/{id}");
+                
+                if (order == null)
+                {
+                    return NotFound("Order not found in OrderService.");
+                }
+
+                return order;
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(503, $"Error connecting to OrderService: {ex.Message}");
+            }
         }
 
         private bool NotificationExists(int id)
