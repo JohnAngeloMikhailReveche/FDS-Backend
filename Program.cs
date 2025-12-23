@@ -17,6 +17,17 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// --- PROPOSED NEW CODE (Active) ---
+// Using In-Memory Database for testing/standalone mode
+builder.Services.AddDbContext<NotificationContext>(options =>
+    options.UseInMemoryDatabase("NotificationDb"));
+
+// --- EXISTING/PRODUCTION CODE (Commented Out) ---
+// When integrating with SQL Server, uncomment this and remove the InMemory block above
+// builder.Services.AddDbContext<NotificationContext>(options =>
+//     options.UseSqlServer(builder.Configuration.GetConnectionString("NotificationContext")));
+
+
 builder.Services.AddHttpClient("OrderService", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Services:OrderService"]);
