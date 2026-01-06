@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Models;
+using NotificationService.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 // Add services to the container.
-
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -15,7 +15,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<NotificationContext>(options =>
-    options.UseInMemoryDatabase("NotificationList"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("NotificationDatabase")));
 
 var app = builder.Build();
 
@@ -31,7 +31,7 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
         options.RoutePrefix = string.Empty;
     });
-}
+}   
 
 
 app.UseHttpsRedirection();

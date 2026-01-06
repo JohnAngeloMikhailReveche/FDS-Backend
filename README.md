@@ -1,3 +1,5 @@
+**(Documentation Not Updated)**
+
 # Notification Service
 
 A microservice responsible for managing and delivering notifications to users through multiple channels (In-App, SMS, and Email).
@@ -38,6 +40,33 @@ The Notification Service provides API for managing user notifications across foo
 2. Restore dependencies: `dotnet restore`
 3. Build the project: `dotnet build`
 4. Run the application: `dotnet run`
+
+### Database migrations (EF Core)
+
+This project uses EF Core for schema management while the repository also includes Dapper for direct queries. Use EF Core migrations to create and apply the database schema.
+
+1. Ensure the connection string is set in `appsettings.json` under `ConnectionStrings:NotificationDatabase`.
+2. Install the EF Core CLI tool (if not already installed):
+
+```powershell
+dotnet tool install --global dotnet-ef --version 8.0.0
+```
+
+3. Create a migration (the project includes `Models/NotificationContextFactory` to help `dotnet ef` find the DbContext):
+
+```powershell
+dotnet ef migrations add InitialCreate --project . --startup-project .
+```
+
+4. Apply the migration to the database:
+
+```powershell
+dotnet ef database update --project . --startup-project .
+```
+
+Notes:
+- If `dotnet ef` reports missing design-time services, make sure `Models/NotificationContextFactory.cs` exists and `appsettings.json` contains the connection string.
+- Alternatively, use the SQL script at `Migrations/V1_CreateNotifications.sql` and the helper `Migrations/apply-migrations.ps1` (requires `sqlcmd`).
 
 ## API Endpoints
 
