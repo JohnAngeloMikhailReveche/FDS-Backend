@@ -1,36 +1,28 @@
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Models;
+using NotificationService.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
-// Add CORS policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
-// Add Controllers with JSON IgnoreCycles
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
-
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// --- PROPOSED NEW CODE (Active) ---
-// Using In-Memory Database for testing/standalone mode
 builder.Services.AddDbContext<NotificationContext>(options =>
-    options.UseInMemoryDatabase("NotificationDb"));
-
-// --- EXISTING/PRODUCTION CODE (Commented Out) ---
-// When integrating with SQL Server, uncomment this and remove the InMemory block above
-// builder.Services.AddDbContext<NotificationContext>(options =>
-//     options.UseSqlServer(builder.Configuration.GetConnectionString("NotificationContext")));
-
+    options.UseSqlServer(builder.Configuration.GetConnectionString("NotificationDatabase")));
 
 builder.Services.AddHttpClient("OrderService", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:OrderService"]);
+    client.BaseAddress = new Uri(builder.Configuration["Services:OrderService"] ?? "http://localhost:5001"); 
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
@@ -43,12 +35,12 @@ if (app.Environment.IsDevelopment())
     {
         options.SerializeAsV2 = true;
     });
-    app.UseSwaggerUI(options => // UseSwaggerUI is called only in Development.
+    app.UseSwaggerUI(options => 
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
         options.RoutePrefix = string.Empty;
     });
-}
+}   
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
