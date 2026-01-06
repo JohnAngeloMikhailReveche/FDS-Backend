@@ -15,7 +15,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<NotificationContext>(options =>
-    options.UseInMemoryDatabase("NotificationList"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("NotificationDatabase")));
 
 var app = builder.Build();
 

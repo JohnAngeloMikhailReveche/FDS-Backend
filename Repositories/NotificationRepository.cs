@@ -1,7 +1,6 @@
+using Dapper;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using NotificationService.Models;
-using System.Data;
 
 namespace NotificationService.Repositories;
 
@@ -10,115 +9,89 @@ public class NotificationRepository : INotificationRepository
     private readonly string _connectionString; 
     public NotificationRepository(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("NotificationDatabase");
+        _connectionString = configuration.GetConnectionString("NotificationDatabase") 
+            ?? throw new InvalidOperationException("Connection string 'NotificationDatabase' is not configured.");
     }
 
-    public async Task<IEnumerable<Notification>> GetAllNotificationsAsync()
-    {
-        var notifications = new List<Notification>();
+   public async Task<IEnumerable<Notification?>> GetAllNotificationsAsync(int userId)
+   {
+        const string sql = """
+            SELECT * FROM Notifications
+            WHERE userId = @userId; 
+        """;
+
         using var conn = new SqlConnection(_connectionString);
-        var cmd = new SqlCommand("SELECT * FROM Notifications", conn);
+        return await conn.QueryAsync<Notification>(
+            sql, 
+            new {userId}
+        );
+   } 
 
-        await conn.OpenAsync();
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            notifications.Add(new Notification
-            {
-                Id = reader.GetInt32(0),
-                UserId = reader.GetInt32(1),
-                Type = reader.GetString(2),
-                Title = reader.GetString(3),
-                Message = reader.GetString(4),
-                Status = reader.GetString(5),
-                PhoneNumber = reader.IsDBNull(6) ? null : reader.GetString(6),
-                EmailAddress = reader.IsDBNull(7) ? null : reader.GetString(7),
-                CreatedAt = reader.GetDateTime(8),
-                UpdatedAt = reader.IsDBNull(9) ? null : reader.GetDateTime(9)
-            });
-        }
+   public async Task<Notification?> GetNotificationAsync(int userId, int notifId)
+   {
+        const string sql = """
+            SELECT * FROM Notifications
+            WHERE userId = @userId AND notifId = @notifId;
+        """;
 
-        return notifications;
+        using var conn = new SqlConnection(_connectionString);
+        return await conn.QuerySingleOrDefaultAsync<Notification>(
+            sql,
+            new {userId, notifId}
+        );
+        
     }
 
-    public async Task<Notification> GetNotificationByIdAsync(int id)
+    public async Task<int> AddNotificationAsync(Notification notification)
     {
-        Notification? notification = null;
+        const string sql = """
+            INSERT INTO Notifications (Id, UserId, Type, Title, Message, Status, PhoneNumber, EmailAddress, CreatedAt, UpdatedAt)
+            VALUES (@Id, @UserId, @Type, @Title, @Message, @Status, @PhoneNumber, @EmailAddress, @CreatedAt, @UpdatedAt); 
+        """;
+
         using var conn = new SqlConnection(_connectionString);
-        var cmd = new SqlCommand("SELECT * FROM Notifications WHERE Id = @Id", conn);
-        cmd.Parameters.AddWithValue("@Id", id);
-
-        await conn.OpenAsync();
-        using var reader = await cmd.ExecuteReaderAsync();
-        if (await reader.ReadAsync())
-        {
-            notification = new Notification
-            {
-                Id = reader.GetInt32(0),
-                UserId = reader.GetInt32(1),
-                Type = reader.GetString(2),
-                Title = reader.GetString(3),
-                Message = reader.GetString(4),
-                Status = reader.GetString(5),
-                PhoneNumber = reader.IsDBNull(6) ? null : reader.GetString(6),
-                EmailAddress = reader.IsDBNull(7) ? null : reader.GetString(7),
-                CreatedAt = reader.GetDateTime(8),
-                UpdatedAt = reader.IsDBNull(9) ? null : reader.GetDateTime(9)
-            };
-        }
-
-        return notification;
-    }
-
-    public async Task AddNotificationAsync(Notification notification)
-    {
-        using var conn = new SqlConnection(_connectionString);
-        var cmd = new SqlCommand("INSERT INTO Notifications (UserId, Type, Title, Message, Status, PhoneNumber, EmailAddress, CreatedAt) VALUES (@UserId, @Type, @Title, @Message, @Status, @PhoneNumber, @EmailAddress, @CreatedAt)", conn);
-        cmd.Parameters.AddWithValue(@"UserId", notification.UserId);
-        cmd.Parameters.AddWithValue("@Type", notification.Type);
-        cmd.Parameters.AddWithValue("@Title", notification.Title);
-        cmd.Parameters.AddWithValue("@Message", notification.Message);
-        cmd.Parameters.AddWithValue("@Status", notification.Status);
-        cmd.Parameters.AddWithValue("@PhoneNumber", (object?)notification.PhoneNumber ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@EmailAddress", (object?)notification.EmailAddress ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@CreatedAt", notification.CreatedAt);
-
-        await conn.OpenAsync();
-        await cmd.ExecuteNonQueryAsync();
-        return;
+        await conn.ExecuteAsync(sql, notification);
+        return notification.Id; 
     }
 
     public async Task UpdateNotificationAsync(Notification notification)
     {
-        using var conn = new SqlConnection(_connectionString);
-        var cmd = new SqlCommand("UPDATE Notifications SET UserId = @UserId, Type = @Type, Title = @Title, Message = @Message, Status = @Status, PhoneNumber = @PhoneNumber, EmailAddress = @EmailAddress, UpdatedAt = @UpdatedAt WHERE Id = @Id", conn);
-        cmd.Parameters.AddWithValue("@Id", notification.Id);
-        cmd.Parameters.AddWithValue("@UserId", notification.UserId);
-        cmd.Parameters.AddWithValue("@Type", notification.Type);
-        cmd.Parameters.AddWithValue("@Title", notification.Title);
-        cmd.Parameters.AddWithValue("@Message", notification.Message);
-        cmd.Parameters.AddWithValue("@Status", notification.Status);
-        cmd.Parameters.AddWithValue("@PhoneNumber", (object?)notification.PhoneNumber ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@EmailAddress", (object?)notification.EmailAddress ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@UpdatedAt", (object?)notification.UpdatedAt ?? DBNull.Value);
-        await conn.OpenAsync();
-        await cmd.ExecuteNonQueryAsync();
+        const string sql = """
+            UPDATE Notifications
+            SET Type = @Type, 
+                Title = @Title, 
+                Message = @Message, 
+                Status = @Status, 
+                PhoneNumber = @PhoneNumber, 
+                EmailAddress = @EmailAddress, 
+                CreatedAt = @CreatedAt, 
+                UpdatedAt = @UpdatedAt
+            WHERE Id = @Id AND UserId = @UserId
+        """;
 
-        return;
+        using var conn = new SqlConnection(_connectionString);
+        await conn.ExecuteAsync(sql, notification);
     }
 
-    public async Task DeleteNotificationAsync(int id)
+    public async Task DeleteAllNotificationsAsync(int userId)
     {
-        using var conn = new SqlConnection(_connectionString);
-        var cmd = new SqlCommand("DELETE FROM Notifications WHERE Id = @Id", conn);
-        cmd.Parameters.AddWithValue("@Id", id);
+        const string sql = """
+              DELETE FROM Notifications
+              WHERE userId = @userId;
+        """;
 
-        await conn.OpenAsync();
-        await cmd.ExecuteNonQueryAsync();
-
-        return;
+       using var conn = new SqlConnection(_connectionString);
+         await conn.ExecuteAsync(sql, new { userId });
     }
-    
+
+    public async Task DeleteNotificationAsync(int userId, int notifId)
+    {
+        const string sql = """
+            DELETE FROM Notifications 
+            WHERE userId = @userId AND notifId = @notifId;
+        """;
+
+        using var conn = new SqlConnection(_connectionString);
+           await conn.ExecuteAsync(sql, new { userId, notifId });
+    }
 }
-
-

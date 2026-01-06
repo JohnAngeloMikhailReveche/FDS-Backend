@@ -4,9 +4,10 @@ namespace NotificationService.Repositories;
 
 public interface INotificationRepository
 {
-    Task<IEnumerable<Notification>> GetAllNotificationsAsync();
-    Task<Notification> GetNotificationByIdAsync(int id);
-    Task AddNotificationAsync(Notification notification);
+    Task<IEnumerable<Notification?>> GetAllNotificationsAsync(int userId);
+    Task<Notification?> GetNotificationAsync(int userId, int notifId);
+    Task<int> AddNotificationAsync(Notification notification);
     Task UpdateNotificationAsync(Notification notification);
-    Task DeleteNotificationAsync(int id);
+    Task DeleteAllNotificationsAsync(int userId);
+    Task DeleteNotificationAsync(int userId, int notifId);
 }
