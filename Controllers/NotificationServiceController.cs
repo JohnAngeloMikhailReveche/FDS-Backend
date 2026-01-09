@@ -1,14 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Models;
 using NotificationService.Services.Email;
 
-namespace NotificationService.Controllers
+namespace NotificationService.Controllers;
+
+[Route("api/notifications")]
+[ApiController]
+[Produces("application/json")] // Defines that this API always returns JSON
+public class NotificationServiceController : ControllerBase
 {
     [Route("api/notifications")]
     [ApiController]
@@ -26,7 +26,11 @@ namespace NotificationService.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Notification>>> GetNotifications()
         {
-            return await _context.Notifications.ToListAsync();
+            return NotFound(new ErrorResponse
+            {
+                Error = "NO_NOTIFICATIONS",
+                Message = "No notifications found"
+            });
         }
 
         [HttpGet("{id}")]
@@ -36,7 +40,19 @@ namespace NotificationService.Controllers
 
             if (notification == null) return NotFound();
 
-            return notification;
+    // POST: /api/notifications/notify
+    [HttpPost("notify")]
+    [ProducesResponseType(typeof(NotificationResponse), 201)]
+    [ProducesResponseType(typeof(ErrorResponse), 400)]
+    public async Task<ActionResult<NotificationResponse>> PostNotification([FromBody] CreateNotificationRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Type) || string.IsNullOrEmpty(request.Message) || string.IsNullOrEmpty(request.Title))
+        {
+            return BadRequest(new ErrorResponse
+            { 
+                Error = "INVALID_REQUEST", 
+                Message = "Missing required field 'type' or 'message'" 
+            });
         }
 
         [HttpPost("notify")]
@@ -72,7 +88,11 @@ namespace NotificationService.Controllers
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetNotification", new { id = notification.Id }, notification);
+            return Ok(new DeleteResponse
+            {
+                UserId = userId,
+                Message = "All notifications successfully deleted."
+            });
         }
     }
 }
