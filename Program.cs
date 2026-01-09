@@ -6,16 +6,14 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+// Add services to the container.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
-
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
-
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -25,13 +23,11 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
+// Register Gmail Service
 builder.Services.AddScoped<GmailService>();
-
 
 builder.Services.AddDbContext<NotificationContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("NotificationDatabase")));
-
 
 builder.Services.AddHttpClient("OrderService", client =>
 {
@@ -41,7 +37,7 @@ builder.Services.AddHttpClient("OrderService", client =>
 
 var app = builder.Build();
 
-
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger(options => 
@@ -55,6 +51,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// Included from remote (Good practice to keep this)
+app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 

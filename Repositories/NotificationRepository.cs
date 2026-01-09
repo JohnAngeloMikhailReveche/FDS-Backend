@@ -15,31 +15,31 @@ public class NotificationRepository : INotificationRepository
 
    public async Task<IEnumerable<Notification?>> GetAllNotificationsAsync(int userId)
    {
-        const string sql = """
-            SELECT * FROM Notifications
-            WHERE userId = @userId; 
-        """;
+       const string sql = """
+           SELECT * FROM Notifications
+           WHERE userId = @userId; 
+       """;
 
-        using var conn = new SqlConnection(_connectionString);
-        return await conn.QueryAsync<Notification>(
-            sql, 
-            new {userId}
-        );
+       using var conn = new SqlConnection(_connectionString);
+       return await conn.QueryAsync<Notification>(
+           sql, 
+           new {userId}
+       );
    } 
 
    public async Task<Notification?> GetNotificationAsync(int userId, int notifId)
    {
-        const string sql = """
-            SELECT * FROM Notifications
-            WHERE userId = @userId AND notifId = @notifId;
-        """;
+       const string sql = """
+           SELECT * FROM Notifications
+           WHERE userId = @userId AND notifId = @notifId;
+       """;
 
-        using var conn = new SqlConnection(_connectionString);
-        return await conn.QuerySingleOrDefaultAsync<Notification>(
-            sql,
-            new {userId, notifId}
-        );
-        
+       using var conn = new SqlConnection(_connectionString);
+       return await conn.QuerySingleOrDefaultAsync<Notification>(
+           sql,
+           new {userId, notifId}
+       );
+       
     }
 
     public async Task<int> AddNotificationAsync(Notification notification)
