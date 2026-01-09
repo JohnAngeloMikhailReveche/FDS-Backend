@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Models;
-using NotificationService.Integration.Email; 
+using NotificationService.Integration.Email;
 
 namespace NotificationService.Controllers
 {
-    [Route("api/notifications")] // Adjusted route to match your docs
+    [Route("api/notifications")]
     [ApiController]
     public class NotificationServiceController : ControllerBase
     {
@@ -30,9 +30,9 @@ namespace NotificationService.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Notification>> GetNotification(string id)
+        public async Task<ActionResult<Notification>> GetNotification(int id) 
         {
-            var notification = await _context.Notifications.FirstOrDefaultAsync(n => n.Id.ToString() == id);
+            var notification = await _context.Notifications.FindAsync(id); 
 
             if (notification == null) return NotFound();
 
@@ -47,7 +47,6 @@ namespace NotificationService.Controllers
                 return BadRequest("Type and Message are required.");
             }
 
-            // EMAIL LOGIC
             if (notification.Type.ToLower() == "email")
             {
                 if (string.IsNullOrEmpty(notification.EmailAddress))
@@ -61,12 +60,12 @@ namespace NotificationService.Controllers
                 }
                 catch (Exception ex)
                 {
+
                     return StatusCode(500, $"Failed to send email: {ex.Message}");
                 }
             }
 
-            // Database Save Logic
-            if (string.IsNullOrEmpty(notification.Id)) notification.Id = Guid.NewGuid().ToString();
+            
             notification.CreatedAt = DateTime.UtcNow;
             notification.Status = "unread";
 
