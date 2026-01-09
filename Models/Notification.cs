@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace NotificationService.Models
@@ -5,19 +6,23 @@ namespace NotificationService.Models
     public class Notification
     {
         [Key]
-        public string? Id { get; set; } // Changed to String to match UUID/NVARCHAR(36)
+        public int Id { get; set; }
 
-        public string? UserId { get; set; }
+        public string TargetUserId { get; set; } = string.Empty;
 
-        public string? Type { get; set; } // "in-app", "sms", "email"
+        public string Title { get; set; } = string.Empty;
 
-        public string? Title { get; set; }
+        public string Message { get; set; } = string.Empty;
 
-        public string? Message { get; set; }
+        public string Type { get; set; } = "account";
 
-        public string? Status { get; set; } // "unread", "read"
+        public bool IsRead { get; set; } 
 
-        public DateTime CreatedAt { get; set; }
+        public DateTime? ReadAt { get; set; } 
+
+        public string? Status { get; set; } 
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
 

@@ -1,3 +1,5 @@
+**(Documentation Not Updated)**
+
 # Notification Service
 
 A microservice responsible for managing and delivering notifications to users through multiple channels (In-App, SMS, and Email).
@@ -18,6 +20,13 @@ The Notification Service provides API for managing user notifications across foo
   - [Mark as Read](#mark-as-read)
   - [Delete All Notifications](#delete-all-notifications)
   - [Delete Specific Notification](#delete-specific-notification)
+- [Notification Types](#notification-types)
+- [Notification Status](#notification-status)
+- [Data Models](#data-models)
+- [Database Schema](#database-schema)
+- [Error Handling](#error-handling)
+- [Best Practices](#best-practices)
+- [Support](#support)
 
 ## Getting Started
 
@@ -31,6 +40,33 @@ The Notification Service provides API for managing user notifications across foo
 2. Restore dependencies: `dotnet restore`
 3. Build the project: `dotnet build`
 4. Run the application: `dotnet run`
+
+### Database migrations (EF Core)
+
+This project uses EF Core for schema management while the repository also includes Dapper for direct queries. Use EF Core migrations to create and apply the database schema.
+
+1. Ensure the connection string is set in `appsettings.json` under `ConnectionStrings:NotificationDatabase`.
+2. Install the EF Core CLI tool (if not already installed):
+
+```powershell
+dotnet tool install --global dotnet-ef --version 8.0.0
+```
+
+3. Create a migration (the project includes `Models/NotificationContextFactory` to help `dotnet ef` find the DbContext):
+
+```powershell
+dotnet ef migrations add InitialCreate --project . --startup-project .
+```
+
+4. Apply the migration to the database:
+
+```powershell
+dotnet ef database update --project . --startup-project .
+```
+
+Notes:
+- If `dotnet ef` reports missing design-time services, make sure `Models/NotificationContextFactory.cs` exists and `appsettings.json` contains the connection string.
+- Alternatively, use the SQL script at `Migrations/V1_CreateNotifications.sql` and the helper `Migrations/apply-migrations.ps1` (requires `sqlcmd`).
 
 ## API Endpoints
 
@@ -681,6 +717,184 @@ The service supports the following notification delivery channels:
   "extraData": "object (optional)",
   "createdAt": "ISO 8601 DateTime",
   "updatedAt": "ISO 8601 DateTime (optional)"
+}
+```
+
+## Database Schema
+
+### Required Fields
+
+The Notification Service requires the following fields in the database:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `Id` | UUID/NVARCHAR(36) | Yes | Unique identifier for the notification |
+| `UserId` | UUID/NVARCHAR(36) | Yes | ID of the user who owns the notification (Foreign Key) |
+| `Type` | NVARCHAR(20) | Yes | Delivery channel type: "in-app", "sms", or "email" |
+| `Title` | NVARCHAR(255) | Yes | Short title of the notification |
+| `Message` | NVARCHAR(MAX) | Yes | Detailed notification message |
+| `Status` | NVARCHAR(20) | Yes | Current status: "unread" or "read" |
+| `CreatedAt` | DATETIME2 | Yes | Timestamp when notification was created (UTC) |
+| `UpdatedAt` | DATETIME2 | No | Timestamp when notification was last updated (UTC) |
+| `ExtraData` | NVARCHAR(MAX) | No | Additional metadata stored as JSON (e.g., orderId, trackingNumber) |
+| `PhoneNumber` | NVARCHAR(20) | Conditional | Phone number for SMS notifications |
+| `EmailAddress` | NVARCHAR(255) | Conditional | Email address for email notifications |
+
+### SQL Table Definition
+
+```sql
+CREATE TABLE [dbo].[Notifications] (
+    [Id] NVARCHAR(36) NOT NULL PRIMARY KEY,
+    [UserId] NVARCHAR(36) NOT NULL,
+    [Type] NVARCHAR(20) NOT NULL,
+    [Title] NVARCHAR(255) NOT NULL,
+    [Message] NVARCHAR(MAX) NOT NULL,
+    [Status] NVARCHAR(20) NOT NULL,
+    [ExtraData] NVARCHAR(MAX) NULL,
+    [PhoneNumber] NVARCHAR(20) NULL,
+    [EmailAddress] NVARCHAR(255) NULL,
+    [CreatedAt] DATETIME2 NOT NULL,
+    [UpdatedAt] DATETIME2 NULL,
+    
+    -- Indexes for performance
+    INDEX [IX_UserId] ([UserId]),
+    INDEX [IX_CreatedAt] ([CreatedAt]),
+    INDEX [IX_Status] ([Status]),
+    INDEX [IX_UserId_CreatedAt] ([UserId], [CreatedAt]),
+    
+    -- Foreign Key constraint
+    CONSTRAINT [FK_Notifications_Users] 
+        FOREIGN KEY ([UserId]) 
+        REFERENCES [dbo].[Users]([Id])
+);
+```
+
+### Entity Framework Core Model
+
+```csharp
+public class Notification
+{
+    public string Id { get; set; }
+    public string UserId { get; set; }
+    public string Type { get; set; }        // in-app, sms, email
+    public string Title { get; set; }
+    public string Message { get; set; }
+    public string Status { get; set; }      // unread, read
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string ExtraData { get; set; }   // JSON stored as string
+    public string PhoneNumber { get; set; }
+    public string EmailAddress { get; set; }
+    
+    // Navigation property
+    public virtual User User { get; set; }
+}
+```
+
+### Database Configuration
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Notification>(entity =>
+    {
+        entity.HasKey(e => e.Id);
+        
+        entity.Property(e => e.Id).HasMaxLength(36).IsRequired();
+        entity.Property(e => e.UserId).HasMaxLength(36).IsRequired();
+        entity.Property(e => e.Type).HasMaxLength(20).IsRequired();
+        entity.Property(e => e.Title).HasMaxLength(255).IsRequired();
+        entity.Property(e => e.Message).HasColumnType("nvarchar(max)").IsRequired();
+        entity.Property(e => e.Status).HasMaxLength(20).IsRequired();
+        entity.Property(e => e.CreatedAt).IsRequired();
+        entity.Property(e => e.UpdatedAt);
+        entity.Property(e => e.ExtraData).HasColumnType("nvarchar(max)");
+        entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+        entity.Property(e => e.EmailAddress).HasMaxLength(255);
+        
+        // Indexes
+        entity.HasIndex(e => e.UserId).HasName("IX_UserId");
+        entity.HasIndex(e => e.CreatedAt).HasName("IX_CreatedAt");
+        entity.HasIndex(e => e.Status).HasName("IX_Status");
+        entity.HasIndex(e => new { e.UserId, e.CreatedAt }).HasName("IX_UserId_CreatedAt");
+        
+        // Foreign Key
+        entity.HasOne(e => e.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+    });
+}
+```
+
+### Sample Data
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "userId": "660e8400-e29b-41d4-a716-446655440111",
+  "type": "in-app",
+  "title": "Order Delivered",
+  "message": "Your order #1234 has been delivered successfully.",
+  "status": "unread",
+  "createdAt": "2025-12-05T10:00:00Z",
+  "updatedAt": null,
+  "extraData": "{\"orderId\": \"1234\", \"trackingNumber\": \"TRACK12345\", \"deliveryTime\": \"10:30 AM\"}",
+  "phoneNumber": null,
+  "emailAddress": null
+}
+```
+
+### Database Performance Recommendations
+
+1. **Indexing Strategy:**
+   - Create composite index on `(UserId, CreatedAt)` for efficient user notification retrieval
+   - Index on `Status` for filtering unread notifications
+   - Index on `CreatedAt` for sorting and archival queries
+
+2. **Partitioning (for large scale):**
+   - Consider partitioning by `CreatedAt` if table grows beyond millions of records
+   - Implement quarterly or monthly partitions for easier maintenance
+
+3. **Archival Policy:**
+   - Archive notifications older than 6-12 months to separate historical tables
+   - Implement soft delete with `IsDeleted` flag if audit trails are needed
+
+4. **Data Retention:**
+   - Implement automatic cleanup jobs to remove notifications older than retention period
+   - Define retention policy based on business requirements (typically 3-12 months)
+
+5. **Connection Pooling:**
+   - Set appropriate connection pool size in `appsettings.json`
+   - Recommended: 20-40 connections for production
+
+### Extra Data Examples
+
+The `ExtraData` field stores JSON data for various notification types:
+
+```json
+// Order Notification
+{
+  "orderId": "ORD12345",
+  "restaurantName": "Pizza Palace",
+  "totalAmount": 25.99,
+  "estimatedDeliveryTime": "30-45 minutes"
+}
+
+// Delivery Notification
+{
+  "deliveryPersonName": "John Doe",
+  "deliveryPersonPhone": "+1-555-0100",
+  "trackingNumber": "TRACK12345",
+  "currentLocation": "5.3521°N 100.0050°E"
+}
+
+// Promotional Notification
+{
+  "campaignId": "CAMP2025",
+  "discountPercentage": 20,
+  "couponCode": "SAVE20",
+  "expiryDate": "2025-12-31T23:59:59Z"
 }
 ```
 
