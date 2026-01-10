@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Models;
 using NotificationService.Repositories;
+using NotificationService.Integration.Email;
 using System.Text.Json.Serialization; 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,7 +29,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Register Gmail Service
-// builder.Services.AddScoped<GmailService>();
+builder.Services.AddScoped<GmailService>();
+
 builder.Services.AddDbContext<NotificationContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("NotificationDatabase")));
 
