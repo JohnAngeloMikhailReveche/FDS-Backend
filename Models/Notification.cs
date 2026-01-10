@@ -26,8 +26,6 @@ namespace NotificationService.Models
 
         public DateTime? UpdatedAt { get; set; }
 
-        public string? ExtraData { get; set; }
-
         public string? PhoneNumber { get; set; }
 
         public string? EmailAddress { get; set; }
