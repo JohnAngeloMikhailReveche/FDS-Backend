@@ -4,3 +4,6 @@ appsettings.Development.json
 appsettings.json
 .vs/
 *.user
+*.config
+appsettings.json
+appsettings.*.json
