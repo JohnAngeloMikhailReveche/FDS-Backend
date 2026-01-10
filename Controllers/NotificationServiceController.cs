@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using NotificationService.Models;
 using NotificationService.Repositories;
 using NotificationService.DTOs;
-using NotificationService.Extensions;
+using NotificationService.Mapping;
 
 namespace NotificationService.Controllers
 {

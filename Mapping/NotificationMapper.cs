@@ -1,9 +1,9 @@
 using NotificationService.DTOs;
 using NotificationService.Models;
 
-namespace NotificationService.Extensions
+namespace NotificationService.Mapping
 {
-    public static class NotificationExtensions
+    public static class NotificationMapping
     {
         public static NotificationResponseDTO ToResponseDTO(this Notification notification)
         {
