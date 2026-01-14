@@ -4,6 +4,7 @@ namespace NotificationService.Repositories
 {
     public interface IUserRepository
     {
+        Task<IEnumerable<User?>> GetAllUserAsync();
         Task<User?> GetUserByIdAsync(string userId);
         Task<User> CreateUserAsync(User user);
         Task<User> GetOrCreateUserAsync(string userId, string? email = null, string? phoneNumber = null);

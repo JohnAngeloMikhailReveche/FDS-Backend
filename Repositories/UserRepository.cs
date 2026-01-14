@@ -14,6 +14,17 @@ namespace NotificationService.Repositories
                 ?? throw new InvalidOperationException("Connection string 'NotificationDatabase' is not configured.");
         }
 
+        public async Task<IEnumerable<User?>> GetAllUserAsync()
+        {
+            const string sql = """
+                SELECT * FROM Users
+                ORDER BY Id;
+            """;
+
+            using var conn = new SqlConnection(_connectionString);
+            return await conn.QueryAsync<User>(sql);
+        }
+
         public async Task<User?> GetUserByIdAsync(string userId)
         {
             const string sql = """

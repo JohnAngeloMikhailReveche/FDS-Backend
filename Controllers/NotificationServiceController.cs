@@ -7,6 +7,7 @@ using NotificationService.Mapping;
 using NotificationService.Helpers;
 using Google.Apis.Gmail.v1;
 using System.Security.Claims;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 namespace NotificationService.Controllers
 {
@@ -19,6 +20,7 @@ namespace NotificationService.Controllers
         private readonly IUserRepository _userRepository;
         private readonly GmailEmailService _gmail;
 
+
         public NotificationServiceController(
             IHttpClientFactory httpClientFactory,
             INotificationRepository notificationRepository, 
@@ -28,7 +30,15 @@ namespace NotificationService.Controllers
             _httpClientFactory = httpClientFactory;
             _notificationRepository = notificationRepository;
             _userRepository = userRepository;
-            _gmail = gmail; 
+            _gmail = gmail;
+        }
+
+        // GET: api/NotificationService
+        [HttpGet("users")]
+        public async Task<ActionResult<IEnumerable<User>>> GetAllUsersAsync()
+        {
+            var response = await _userRepository.GetAllUserAsync();
+            return Ok(response);
         }
 
 
@@ -39,7 +49,6 @@ namespace NotificationService.Controllers
         {
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
@@ -61,7 +70,6 @@ namespace NotificationService.Controllers
         {            
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();    
 
@@ -70,11 +78,11 @@ namespace NotificationService.Controllers
                 return NotFound("User not found.");
             
             var notification = await _notificationRepository.GetNotificationAsync(userId, id);
-
             if (notification == null)
                 return NotFound();
-
-            return Ok(notification.ToResponseDTO());
+            
+            var response = notification.ToResponseDTO();
+            return Ok(response);
         }
 
         
@@ -86,8 +94,7 @@ namespace NotificationService.Controllers
         {
 
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            var userId = "234";
-
+            var userId = "123";
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
@@ -107,9 +114,8 @@ namespace NotificationService.Controllers
                 Body = $"User account created successfully",
             };
 
-            var notificationResult = await SendInAppNotification(notificationDto);
-
-            return notificationResult;
+            var response = await SendInAppNotification(notificationDto);
+            return Ok(response); // re-check this.
         }
 
 
@@ -121,23 +127,19 @@ namespace NotificationService.Controllers
         {
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
             var (email, phoneNumber) = await _userRepository.GetUserContactAsync(userId);
-
             if (string.IsNullOrWhiteSpace(email))
                 return BadRequest(new { 
                     message = "User email not found in database.", 
                     email = email, phoneNumber = phoneNumber });
 
             email = email.Trim();
-            
             if (!email.Contains("@"))
                 return BadRequest(new { 
-                    message = "Invalid email address in database.", 
-                    email = email, emailLength = email.Length 
+                    message = "Invalid email address in database."
                     });
 
             var notification = new Notification
@@ -168,24 +170,23 @@ namespace NotificationService.Controllers
                     error = ex.Message 
                     });
             }
-            
-            return Ok(new { message = "Email sent.", notificationId = notificationId });          
+
+            var response = new { message = "Email sent.", notificationId = notificationId };
+            return Ok(response);          
         }
 
 
         // POST: api/SendTelegramNotification
         // [Authorize]
-        [HttpPost("telegram/send-message")]
-        public async Task<ActionResult<Notification>> SendTelegramNotification(
+        [HttpPost("sms/send-message")]
+        public async Task<ActionResult<Notification>> SendSMSNotification(
             CreateNotificationDTO notificationDto)
         {
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            
             await _userRepository.GetOrCreateUserAsync(userId);
 
             var notification = new Notification
@@ -199,23 +200,14 @@ namespace NotificationService.Controllers
                 IsRead = false
             };
 
-            // Telegram code here
-            // try
-            // 
-               // 
- 
-            // catch
-            // {
-
-            // }            }
-
-
+            // Telegram Service
+          
             var notificationId = await _notificationRepository.AddNotificationAsync(notification);
             notification.Id = notificationId;
 
-            return Ok(new { message = "Message sent.", notificationId = notificationId });          
+            var response = new { message = "Message sent to Telegram.", notificationId = notificationId };
+            return Ok(response);          
         }
-
 
 
         //  POST: api/SendInAppNotification
@@ -226,7 +218,6 @@ namespace NotificationService.Controllers
         {
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
@@ -246,10 +237,10 @@ namespace NotificationService.Controllers
 
             var notificationId = await _notificationRepository.AddNotificationAsync(notification);
             notification.Id = notificationId;
-
-            return CreatedAtAction(nameof(GetNotification), new { id = notificationId }, notification);
+            
+            var response = CreatedAtAction(nameof(GetNotification), new { id = notificationId }, notification);
+            return response;
         }
-
 
         // PaymentService will use this
         // [Authorize]
@@ -258,7 +249,6 @@ namespace NotificationService.Controllers
         {
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
@@ -279,7 +269,8 @@ namespace NotificationService.Controllers
             var notificationId = await _notificationRepository.AddNotificationAsync(notification);
             notification.Id = notificationId;
 
-            return CreatedAtAction(nameof(GetNotification), new { id = notificationId }, notification);
+            var response = CreatedAtAction(nameof(GetNotification), new { id = notificationId }, notification);
+            return response;
         }
 
 
@@ -290,16 +281,15 @@ namespace NotificationService.Controllers
         {
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
             var success = await _notificationRepository.MarkAllAsReadAsync(userId);
-
             if (!success)
                 return NotFound(new { message = "No notifications to mark as read." });
 
-            return Ok(new { message = "All notifications marked as read." });
+            var response = new { message = "All notifications marked as read." };
+            return Ok(response);
         }
 
 
@@ -310,45 +300,46 @@ namespace NotificationService.Controllers
         {
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
             
             var notification = await _notificationRepository.GetNotificationAsync(userId, id);
-
             if (notification == null)
                 return NotFound(new { message = "Notification not found." });
 
             var success = await _notificationRepository.MarkAsReadAsync(userId, id);
-            
             if (!success)
                 return StatusCode(500, new { message = "Failed to mark notification as read." });
 
-            return Ok(new { message = "Notification marked as read.", id = id });
+            var response = new { message = "Notification marked as read.", id = id };
+            return Ok(response);
         }
 
         // PUT: api/users/{userId}/update
         // [Authorize]
         [HttpPut("users/{userId}/update")]
-        public async Task<IActionResult> UpdateUser(CreateNotificationDTO updateDto)
+        public async Task<IActionResult> UpdateUser(CreateUserDTO userDto)
         {
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return BadRequest(new { message = "User ID is required." });
 
-            // Verify user exists
             var existingUser = await _userRepository.GetUserByIdAsync(userId);
             if (existingUser == null)
                 return NotFound(new { message = "User not found." });
 
-            var success = await _userRepository.UpdateUserAsync(userId); 
-
+            var success = await _userRepository.UpdateUserAsync(
+                userId, 
+                userDto.Email, 
+                userDto.PhoneNumber);
             if (!success)
                 return StatusCode(500, new { message = "Failed to update user." });
 
-            return Ok(new { message = "User updated successfully.", userId = userId });
+            var user = _userRepository.GetUserByIdAsync(userId);
+
+            var response = new { user, userId = userId };
+            return Ok(response);
         }
 
 
@@ -359,16 +350,15 @@ namespace NotificationService.Controllers
         {
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
             var success = await _notificationRepository.DeleteAllNotificationsAsync(userId);
-            
             if (!success)
                 return NotFound(new { message = "No notifications to be deleted."});
 
-            return Ok(new { message = "All notifications deleted."});
+            var response = new { message = "All notifications deleted."};
+            return Ok(response);
         }
 
 
@@ -384,18 +374,15 @@ namespace NotificationService.Controllers
                 return Unauthorized();
 
             var notification = await _notificationRepository.GetNotificationAsync(userId, id);
-
             if (notification == null)
-            {
                 return NotFound(new { message = "Notification not found."});
-            }
 
             var success = await _notificationRepository.DeleteNotificationAsync(userId, id);
-            
             if (!success)
                 return StatusCode(500, new { message = "Failed to delete notification." });
-
-            return Ok(new { message = "Notification deleted."});
+            
+            var response = new { message = "Notification deleted."};
+            return Ok(response);
         }
 
 
@@ -406,7 +393,6 @@ namespace NotificationService.Controllers
         {
             // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var userId = "123";
-
             if (string.IsNullOrEmpty(userId))
                 return BadRequest(new { message = "User ID is required." });
 
@@ -415,11 +401,11 @@ namespace NotificationService.Controllers
                 return NotFound(new { message = "User not found." });
 
             var success = await _userRepository.DeleteUserAsync(userId);
-
             if (!success)
                 return StatusCode(500, new { message = "Failed to delete user." });
 
-            return Ok(new { message = "User deleted successfully.", userId = userId });
+            var response = new { message = "User deleted successfully.", userId = userId };
+            return Ok(response);
         }
     }
 }
