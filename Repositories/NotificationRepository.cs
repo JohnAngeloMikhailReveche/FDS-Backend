@@ -20,7 +20,7 @@ public class NotificationRepository : INotificationRepository
     {
         const string sql = """
             SELECT * FROM Notifications
-            WHERE TargetUserId = @targetUserId
+            WHERE UserId = @targetUserId
             ORDER BY CreatedAt DESC; 
         """;
         
@@ -35,7 +35,7 @@ public class NotificationRepository : INotificationRepository
     {
         const string sql = """
             SELECT * FROM Notifications
-            WHERE TargetUserId = @targetUserId AND Id = @id;
+            WHERE UserId = @targetUserId AND Id = @id;
         """;
 
         using var conn = new SqlConnection(_connectionString);
@@ -52,9 +52,9 @@ public class NotificationRepository : INotificationRepository
     {
         const string sql = """
             INSERT INTO Notifications 
-            (TargetUserId, Type, Title, Message, Status, PhoneNumber, EmailAddress, IsRead, CreatedAt, UpdatedAt)
+            (UserId, Type, Subject, Body, Status, IsRead, CreatedAt, UpdatedAt)
             VALUES 
-            (@TargetUserId, @Type, @Title, @Message, @Status, @PhoneNumber, @EmailAddress, @IsRead, @CreatedAt, @UpdatedAt);
+            (@UserId, @Type, @Subject, @Body, @Status, @IsRead, @CreatedAt, @UpdatedAt);
             SELECT CAST(SCOPE_IDENTITY() as int);
         """;
 
@@ -71,15 +71,13 @@ public class NotificationRepository : INotificationRepository
         const string sql = """
             UPDATE Notifications
             SET Type = @Type, 
-                Title = @Title, 
-                Message = @Message, 
+                Subject = @Subject, 
+                Body = @Body, 
                 Status = @Status, 
-                PhoneNumber = @PhoneNumber, 
-                EmailAddress = @EmailAddress,
                 IsRead = @IsRead,
                 ReadAt = @ReadAt,
-                UpdatedAt = @UpdatedAt,
-            WHERE Id = @Id AND TargetUserId = @TargetUserId;
+                UpdatedAt = @UpdatedAt
+            WHERE Id = @Id AND UserId = @UserId;
         """;
 
         using var conn = new SqlConnection(_connectionString);
@@ -94,7 +92,7 @@ public class NotificationRepository : INotificationRepository
         const string sql = """
             UPDATE Notifications
             SET IsRead = 1, ReadAt = @readAt
-            WHERE TargetUserId = @targetUserId AND IsRead = 0;
+            WHERE UserId = @targetUserId AND IsRead = 0;
         """;
 
         using var conn = new SqlConnection(_connectionString);
@@ -110,7 +108,7 @@ public class NotificationRepository : INotificationRepository
         const string sql = """
             UPDATE Notifications
             SET IsRead = 1, ReadAt = @readAt, UpdatedAt = @updatedAt
-            WHERE Id = @id AND TargetUserId = @targetUserId;
+            WHERE Id = @id AND UserId = @targetUserId;
         """;
 
         using var conn = new SqlConnection(_connectionString);
@@ -128,7 +126,7 @@ public class NotificationRepository : INotificationRepository
     {
         const string sql = """
             DELETE FROM Notifications
-            WHERE TargetUserId = @targetUserId;
+            WHERE UserId = @targetUserId;
         """;
 
         using var conn = new SqlConnection(_connectionString);
@@ -143,7 +141,7 @@ public class NotificationRepository : INotificationRepository
     {
         const string sql = """
             DELETE FROM Notifications 
-            WHERE TargetUserId = @targetUserId AND Id = @id;
+            WHERE UserId = @targetUserId AND Id = @id;
         """;
 
         using var conn = new SqlConnection(_connectionString);

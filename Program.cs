@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Models;
 using NotificationService.Repositories;
-using NotificationService.Integration.Email;
-using System.Text.Json.Serialization; 
+using NotificationService.Helpers;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCors(options =>
@@ -19,6 +19,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -29,14 +30,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Register Gmail Service
-builder.Services.AddScoped<GmailService>();
+builder.Services.AddScoped<GmailEmailService>();
 
-builder.Services.AddDbContext<NotificationContext>(options =>
+// Register HttpClient
+builder.Services.AddHttpClient();
+
+builder.Services.AddDbContext<NotificationServiceContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("NotificationDatabase")));
 
-builder.Services.AddHttpClient("OrderService", client =>
+builder.Services.AddHttpClient("NotificationService", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:OrderService"] ?? "http://localhost:5001");
+    client.BaseAddress = new Uri(builder.Configuration["Services:NotificationService"] ?? "http://localhost:5006");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
@@ -45,10 +49,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(options => 
-    { 
-        options.SerializeAsV2 = true; 
-    });
+    app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
