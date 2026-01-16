@@ -1,18 +1,76 @@
-﻿import React, { useState } from "react";
+﻿// src/pages/Register.jsx
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import "./Register.css";
-import smallIcon from "./kapebara.png";
-import mascotIllustration from "./kapebaralogo.png";
+import "../css/Register.css";
+import { registerCustomer } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 
-export default function Register() {
+// Import images - use the same logo from Login
+import smallIcon from "../images/kapebara-logo-transparent.png";
+import mascotIllustration from "../images/mascot.png";
+
+export default function Register({ onBackToHome, onSwitchToLogin }) {
     const { register, handleSubmit, watch, formState: { errors } } = useForm();
+    const { login } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
     const password = watch("password");
 
-    const onSubmit = (data) => {
-        const { confirmPass: _, ...formDataToSend } = data;
-        console.log("Registration Successful! Data:", formDataToSend);
-        alert("Registration successful! Welcome to Kapebara!");
+    const onSubmit = async (data) => {
+        setIsLoading(true);
+
+        try {
+            // Register as customer (backend determines role via /register/customer endpoint)
+            const response = await registerCustomer(data);
+
+            let userRole, userName, token, userEmail;
+
+            if (response.user) {
+                userRole = response.user.role;
+                userName = response.user.fullName;
+                token = response.user.token;
+                userEmail = response.user.email;
+            } else {
+                userRole = response.role;
+                userName = response.fullName;
+                token = response.token;
+                userEmail = response.email;
+            }
+
+            // Log the role for debugging
+            console.log('Registration response:', response);
+            console.log('User role returned:', userRole);
+
+            // Verify that the registered user is indeed a customer
+            // Check for both 'customer' and 'Customer' (case-insensitive)
+            const normalizedRole = userRole?.toLowerCase();
+            if (normalizedRole !== 'customer') {
+                console.error('Unexpected role returned:', userRole);
+                throw new Error(`Registration failed: Unexpected role '${userRole}'. Only customer accounts can be created.`);
+            }
+
+            // Store in memory via AuthContext
+            login(token, {
+                email: userEmail,
+                fullName: userName,
+                role: userRole
+            });
+
+            alert(`✅ Registration successful! Welcome ${userName}!`);
+
+            // Redirect to home
+            if (onBackToHome) {
+                onBackToHome();
+            }
+
+        } catch (error) {
+            console.error('Registration failed:', error);
+            alert(`Registration failed: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -21,6 +79,7 @@ export default function Register() {
                 <h1 className="signup-title">SIGN UP</h1>
                 <h3 className="welcome">Welcome to Kapebara!</h3>
                 <form onSubmit={handleSubmit(onSubmit)} className="form-box">
+
                     <div className="input-group">
                         <label>Name</label>
                         <input
@@ -28,6 +87,7 @@ export default function Register() {
                             placeholder="Enter your name..."
                             {...register("fullName", { required: "Name is required." })}
                             className={errors.fullName ? "input-error" : ""}
+                            disabled={isLoading}
                         />
                         {errors.fullName && <p className="error-message">{errors.fullName.message}</p>}
                     </div>
@@ -42,6 +102,7 @@ export default function Register() {
                                 pattern: { value: /^\d{11}$/, message: "Must be a valid 11-digit number." }
                             })}
                             className={errors.contact ? "input-error" : ""}
+                            disabled={isLoading}
                         />
                         {errors.contact && <p className="error-message">{errors.contact.message}</p>}
                     </div>
@@ -56,13 +117,14 @@ export default function Register() {
                                 pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Please enter a valid email address." }
                             })}
                             className={errors.email ? "input-error" : ""}
+                            disabled={isLoading}
                         />
                         {errors.email && <p className="error-message">{errors.email.message}</p>}
                     </div>
 
-                    <div className="input-group password-group">
+                    <div className="input-group">
                         <label>Password</label>
-                        <div style={{ position: 'relative' }}>
+                        <div className="password-container">
                             <input
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Enter your password..."
@@ -71,72 +133,56 @@ export default function Register() {
                                     minLength: { value: 8, message: "Password must be at least 8 characters." }
                                 })}
                                 className={errors.password ? "input-error" : ""}
-                                style={{ paddingRight: '40px' }}
+                                disabled={isLoading}
                             />
-                            <button
-                                type="button"
+                            <i
+                                className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"} toggle-password-icon`}
                                 onClick={() => setShowPassword(!showPassword)}
-                                style={{
-                                    position: 'absolute',
-                                    right: '10px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: '18px',
-                                    color: '#4a3832'
-                                }}
-                            >
-                                {showPassword ? '👁️' : '👁️‍🗨️'}
-                            </button>
+                            ></i>
                         </div>
                         {errors.password && <p className="error-message">{errors.password.message}</p>}
                     </div>
 
-                    <div className="input-group password-group">
+                    <div className="input-group">
                         <label>Confirm Password</label>
-                        <div style={{ position: 'relative' }}>
+                        <div className="password-container">
                             <input
-                                type={showPassword ? "text" : "password"}
+                                type={showConfirmPassword ? "text" : "password"}
                                 placeholder="Confirm your password..."
                                 {...register("confirmPass", {
                                     required: "Confirm Password is required.",
                                     validate: value => value === password || "Passwords do not match."
                                 })}
                                 className={errors.confirmPass ? "input-error" : ""}
-                                style={{ paddingRight: '40px' }}
+                                disabled={isLoading}
                             />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                style={{
-                                    position: 'absolute',
-                                    right: '10px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: '18px',
-                                    color: '#4a3832'
-                                }}
-                            >
-                                {showPassword ? '👁️' : '👁️‍🗨️'}
-                            </button>
+                            <i
+                                className={`fa-solid ${showConfirmPassword ? "fa-eye-slash" : "fa-eye"} toggle-password-icon`}
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            ></i>
                         </div>
                         {errors.confirmPass && <p className="error-message">{errors.confirmPass.message}</p>}
                     </div>
 
-                    <button type="submit" className="submit-btn">Submit</button>
+                    <button type="submit" className="submit-btn" disabled={isLoading}>
+                        {isLoading ? 'Registering...' : 'Submit'}
+                    </button>
                 </form>
             </div>
 
             <div className="register-right">
-                <img src={smallIcon} alt="Kapebara Small Icon" className="kapebara-small-icon" />
-                <img src={mascotIllustration} alt="Kapebara Mascot Illustration" className="kapebara-mascot" />
+                {smallIcon ? (
+                    <img src={smallIcon} alt="Kapebara Small Icon" className="kapebara-small-icon" />
+                ) : (
+                    <div style={{ padding: '20px', background: '#f0f0f0', textAlign: 'center' }}>
+                        <h2>KAPEBARA</h2>
+                    </div>
+                )}
+                {mascotIllustration && (
+                    <img src={mascotIllustration} alt="Kapebara Mascot Illustration" className="kapebara-mascot" />
+                )}
                 <p className="login-text">
-                    Already have an account? <a href="#">Log in here</a>
+                    Already have an account? <a onClick={onSwitchToLogin} style={{ cursor: 'pointer', color: '#ffffff', textDecoration: 'underline' }}>Log in here</a>
                 </p>
             </div>
         </div>

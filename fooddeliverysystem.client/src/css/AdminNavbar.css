@@ -1,0 +1,154 @@
+.admin-navbar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    padding: 1.2rem 5%;
+    background-color: white;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 2002;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+}
+
+.logo-container {
+    justify-self: start;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.logo-img {
+    height: 40px;
+    object-fit: contain;
+}
+
+.logo-text {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.nav-links-center {
+    display: flex;
+    gap: 40px;
+    justify-content: flex-end;
+    justify-self: end;
+    margin-right: 60px; /* Space between nav links and icons */
+}
+
+.nav-link {
+    text-decoration: none;
+    color: var(--text-color, #231f1e);
+    font-weight: 700;
+    font-size: 1rem;
+    transition: color 0.2s;
+    cursor: pointer;
+}
+
+    .nav-link.active,
+    .nav-link:hover {
+        color: #8c735e;
+    }
+
+.nav-icons-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    justify-self: end;
+}
+
+/* buttons */
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color, #231f1e);
+    transition: background-color 0.2s;
+}
+
+    .icon-btn:hover {
+        background-color: #f9f9f9;
+    }
+
+/* menu button - positioned in upper right */
+.menu-btn {
+    display: flex;
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--text-color, #231f1e);
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    transition: background-color 0.2s;
+    border-radius: 50%;
+}
+
+    .menu-btn:hover {
+        background-color: #f9f9f9;
+    }
+
+.hidden-mobile {
+    display: flex;
+}
+
+/* mobile view */
+@media (max-width: 768px) {
+    .admin-navbar {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+    }
+
+    .hidden-mobile {
+        display: none !important;
+    }
+
+    .nav-links-center {
+        margin-right: 0; /* Remove margin on mobile */
+    }
+
+    .nav-icons-right {
+        justify-self: unset;
+        gap: 10px;
+        margin-left: auto;
+    }
+
+    .logo-text {
+        font-size: 1.5rem;
+    }
+
+    .logo-img {
+        height: 35px;
+    }
+}
+
+/* Small Mobile View */
+@media (max-width: 480px) {
+    .admin-navbar {
+        padding: 0.8rem 1rem;
+    }
+
+    .logo-text {
+        font-size: 1.3rem;
+    }
+
+    .logo-img {
+        height: 32px;
+    }
+
+    .nav-icons-right {
+        gap: 8px;
+    }
+
+    .icon-btn,
+    .menu-btn {
+        padding: 6px;
+    }
+}

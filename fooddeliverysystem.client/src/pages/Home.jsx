@@ -1,15 +1,15 @@
 ﻿import React from "react";
-import "./Home.css";
+import "../css/Home.css";
 // Images
-import titleImage from "./images/kapebara-logo-transparent.png";
-import leftImage from "./images/mascot.png";
-import drink1 from "./images/classic-coffeebara.png";
-import drink2 from "./images/classic-creamybara.png";
-import drink3 from "./images/classic-kapebarako-1.png";
-import footerImage from "./images/FooterLogo.png";
-import instagramIcon from "./images/instagram.png";
-import facebookIcon from "./images/facebook.png";
-import tiktokIcon from "./images/tiktok.png";
+import titleImage from "../images/kapebara-logo-transparent.png";
+import leftImage from "../images/mascot.png";
+import drink1 from "../images/classic-coffeebara.png";
+import drink2 from "../images/classic-creamybara.png";
+import drink3 from "../images/classic-kapebarako-1.png";
+import footerImage from "../images/FooterLogo.png";
+import instagramIcon from "../images/instagram.png";
+import facebookIcon from "../images/facebook.png";
+import tiktokIcon from "../images/tiktok.png";
 
 function Home({ onNavigateToRegister, onNavigateToLogin }) {
     const drinks = [

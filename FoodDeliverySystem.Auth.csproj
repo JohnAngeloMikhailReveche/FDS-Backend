@@ -29,6 +29,7 @@
   <ItemGroup>
     <Folder Include="FoodDeliverySystem.API\Services\" />
     <Folder Include="FoodDeliverySystem.Application\Services\" />
+    <Folder Include="fooddeliverysystem.client\src\g1\" />
     <Folder Include="FoodDeliverySystem.Domain\Common\" />
     <Folder Include="FoodDeliverySystem.Infrastructure\Migrations\" />
     <Folder Include="FoodDeliverySystem.Infrastructure\Repositories\" />
