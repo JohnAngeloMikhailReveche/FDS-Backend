@@ -169,7 +169,7 @@ namespace NotificationService.Repositories
             using var command = new SqlCommand("sp_DeleteUser", conn);
 
             command.CommandType = CommandType.StoredProcedure;
-            command.Parameters.AddWithValue("@UserId", userId);
+            command.Parameters.AddWithValue("@Id", userId);
 
             await conn.OpenAsync();
 
