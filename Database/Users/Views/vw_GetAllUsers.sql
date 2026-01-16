@@ -1,0 +1,4 @@
+CREATE OR ALTER VIEW vw_GetAllUsers
+AS 
+SELECT * 
+FROM Users;

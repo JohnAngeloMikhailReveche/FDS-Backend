@@ -1,0 +1,7 @@
+CREATE OR ALTER PROCEDURE sp_GetUserById
+    @Id NVARCHAR(100) 
+AS
+BEGIN
+    SELECT * FROM vw_GetAllUsers
+    WHERE Id = @Id;
+END;

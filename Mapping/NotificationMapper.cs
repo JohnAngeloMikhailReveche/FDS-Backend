@@ -10,11 +10,10 @@ namespace NotificationService.Mapping
             return new NotificationResponseDTO
             {
                 Id = notification.Id,
-                TargetUserId = notification.UserId,
+                UserId = notification.UserId,
                 Subject = notification.Subject,
                 Body = notification.Body,
                 Type = notification.Type,
-                Status = notification.Status,
                 IsRead = notification.IsRead,
                 ReadAt = notification.ReadAt,
                 CreatedAt = notification.CreatedAt,

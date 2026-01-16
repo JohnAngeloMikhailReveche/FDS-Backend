@@ -1,0 +1,7 @@
+CREATE OR ALTER PROCEDURE sp_DeleteUser
+    @Id NVARCHAR(100)
+AS
+BEGIN
+    DELETE FROM Users
+    WHERE Id = @Id;
+END

@@ -1,17 +1,17 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using NotificationService.Models;
 using NotificationService.Repositories;
 using NotificationService.Helpers;
 using System.Text.Json.Serialization;
+using NotificationService.Interfaces;
+using NotificationService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-});
 
-// Add services to the container.
+// Add CORS policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -28,6 +28,48 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Configure JWT Authentication
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "NotificationService";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "NotificationService";
+
+// var jwtKey = builder.Configuration["Jwt:Key"] 
+//     ?? throw new InvalidOperationException("JWT Key is not configured. Please set 'Jwt:Key' in appsettings.json");
+var jwtKey = builder.Configuration["Jwt:Key"];
+
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new InvalidOperationException("JWT Key is not configured. Please set 'Jwt:Key' in appsettings.json or environment variable.");
+}
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ClockSkew = TimeSpan.Zero 
+    };
+});
+
+builder.Services.AddAuthorization();
+
+
+// Register Services
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IInboxService, InboxService>();
+builder.Services.AddScoped<ISMSService, SMSService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Register Gmail Service
 builder.Services.AddScoped<GmailEmailService>();
@@ -57,11 +99,12 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Included from remote (Good practice to keep this)
+
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 
+app.UseAuthentication(); 
 app.UseAuthorization();
 app.MapControllers();
 

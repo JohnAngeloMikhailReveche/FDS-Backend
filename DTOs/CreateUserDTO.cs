@@ -1,7 +1,3 @@
-using System;
-
-using System;
-
 namespace NotificationService.DTOs
 {
     public class CreateUserDTO

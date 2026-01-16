@@ -1,6 +1,9 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
 using NotificationService.Models;
+using NotificationService.Interfaces;
+using System.Data;
+using System.Runtime.CompilerServices;
 
 namespace NotificationService.Repositories;
 
@@ -13,139 +16,188 @@ public class NotificationRepository : INotificationRepository
             ?? throw new InvalidOperationException("Connection string 'NotificationDatabase' is not configured.");
     }
 
-    /// <summary>
+
     /// Get all notifications for a specific user ordered by creation date (newest first)
-    /// </summary>
-    public async Task<IEnumerable<Notification>> GetAllNotificationsAsync(string targetUserId)
+    public async Task<IEnumerable<Notification>> GetAllNotificationsAsync(string userId)
     {
-        const string sql = """
-            SELECT * FROM Notifications
-            WHERE UserId = @targetUserId
-            ORDER BY CreatedAt DESC; 
-        """;
-        
+        var notifications = new List<Notification>();
+
         using var conn = new SqlConnection(_connectionString);
-        return await conn.QueryAsync<Notification>(sql, new { targetUserId });
+        using var command = new SqlCommand("sp_GetAllNotifications", conn);
+
+        command.CommandType = CommandType.StoredProcedure;
+        command.Parameters.AddWithValue("@UserId", userId);
+
+        await conn.OpenAsync();
+
+        using var reader = await command.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            notifications.Add(new Notification
+            {
+                Id = reader.GetInt32("Id"),
+                Subject = reader.GetString("Subject"),
+                Body = reader.GetString("Body"),
+                Type = reader.GetString("Type"),
+                IsRead = reader.GetBoolean("IsRead"),
+                ReadAt = reader.IsDBNull("ReadAt") ? null : reader.GetDateTime("ReadAt"),
+                CreatedAt = reader.GetDateTime("CreatedAt"),
+                UpdatedAt = reader.IsDBNull("UpdatedAt") ? null : reader.GetDateTime("UpdatedAt"),
+                UserId = reader.GetString("UserId") 
+            });
+        }
+
+        return notifications;
     }
 
-    /// <summary>
+
     /// Get a specific notification by ID for a user
-    /// </summary>
-    public async Task<Notification?> GetNotificationAsync(string targetUserId, int id)
+    public async Task<Notification?> GetNotificationAsync(string userId, int id)
     {
-        const string sql = """
-            SELECT * FROM Notifications
-            WHERE UserId = @targetUserId AND Id = @id;
-        """;
-
         using var conn = new SqlConnection(_connectionString);
-        return await conn.QuerySingleOrDefaultAsync<Notification>(
-            sql,
-            new { targetUserId, id }
-        );
+        using var command = new SqlCommand("sp_GetNotification", conn);
+
+        command.CommandType = CommandType.StoredProcedure;
+        command.Parameters.AddWithValue("@UserId", userId);
+        command.Parameters.AddWithValue("@Id", id);
+
+        await conn.OpenAsync();
+
+        using var reader = await command.ExecuteReaderAsync();
+
+        if (await reader.ReadAsync())
+        {
+            return new Notification
+            {
+                Id = reader.GetInt32("Id"),
+                Subject = reader.GetString("Subject"),
+                Body = reader.GetString("Body"),
+                Type = reader.GetString("Type"),
+                IsRead = reader.GetBoolean("IsRead"),
+                ReadAt = reader.IsDBNull("ReadAt") ? null : reader.GetDateTime("ReadAt"),
+                CreatedAt = reader.GetDateTime("CreatedAt"),
+                UpdatedAt = reader.IsDBNull("UpdatedAt") ? null : reader.GetDateTime("UpdatedAt"),
+                UserId = reader.GetString("UserId")
+            };
+        }
+
+        return null;
     }
 
-    /// <summary>
+
     /// Add a new notification to the database
-    /// </summary>
     public async Task<int> AddNotificationAsync(Notification notification)
     {
-        const string sql = """
-            INSERT INTO Notifications 
-            (UserId, Type, Subject, Body, Status, IsRead, CreatedAt, UpdatedAt)
-            VALUES 
-            (@UserId, @Type, @Subject, @Body, @Status, @IsRead, @CreatedAt, @UpdatedAt);
-            SELECT CAST(SCOPE_IDENTITY() as int);
-        """;
-
         using var conn = new SqlConnection(_connectionString);
-        var id = await conn.ExecuteScalarAsync<int>(sql, notification);
+        using var command = new SqlCommand("sp_AddNotification", conn);
+
+        command.CommandType = CommandType.StoredProcedure;
+        command.Parameters.AddWithValue("@UserId", notification.UserId);
+        command.Parameters.AddWithValue("@Type", notification.Type);
+        command.Parameters.AddWithValue("@Subject", notification.Subject);
+        command.Parameters.AddWithValue("@Body", notification.Body);
+        command.Parameters.AddWithValue("@IsRead", notification.IsRead);
+        command.Parameters.AddWithValue("@CreatedAt", notification.CreatedAt);
+        command.Parameters.AddWithValue("@UpdatedAt", notification.UpdatedAt ?? (object)DBNull.Value);
+
+        await conn.OpenAsync();
+    
+        int id = (int)await command.ExecuteScalarAsync();
         return id;
     }
 
-    /// <summary>
     /// Update an existing notification
-    /// </summary>
-    public async Task UpdateNotificationAsync(Notification notification)
+    public async Task<int> UpdateNotificationAsync(Notification notification)
     {
-        const string sql = """
-            UPDATE Notifications
-            SET Type = @Type, 
-                Subject = @Subject, 
-                Body = @Body, 
-                Status = @Status, 
-                IsRead = @IsRead,
-                ReadAt = @ReadAt,
-                UpdatedAt = @UpdatedAt
-            WHERE Id = @Id AND UserId = @UserId;
-        """;
-
         using var conn = new SqlConnection(_connectionString);
-        await conn.ExecuteAsync(sql, notification);
+        using var command = new SqlCommand("sp_UpdateNotification", conn);
+
+        command.CommandType = CommandType.StoredProcedure;
+        command.Parameters.AddWithValue("@UserId", notification.UserId);
+        command.Parameters.AddWithValue("@Type", notification.Type);
+        command.Parameters.AddWithValue("@Subject", notification.Subject);
+        command.Parameters.AddWithValue("@Body", notification.Body);
+        command.Parameters.AddWithValue("@IsRead", notification.IsRead);
+        command.Parameters.AddWithValue("@CreatedAt", notification.CreatedAt);
+        command.Parameters.AddWithValue("@UpdatedAt", notification.UpdatedAt);
+
+        await conn.OpenAsync();
+
+        int id = (int)await command.ExecuteScalarAsync();
+        return id;
     }
 
-    /// <summary>
-    /// Mark all unread notifications as read for a user
-    /// </summary>
-    public async Task<bool> MarkAllAsReadAsync(string targetUserId)
+    // Mark all unread notifications as read for a user
+    public async Task<bool> MarkAllAsReadAsync(string userId)
     {
-        const string sql = """
-            UPDATE Notifications
-            SET IsRead = 1, ReadAt = @readAt
-            WHERE UserId = @targetUserId AND IsRead = 0;
-        """;
-
         using var conn = new SqlConnection(_connectionString);
-        var rowsAffected = await conn.ExecuteAsync(sql, new { targetUserId, readAt = DateTime.UtcNow });
-        return rowsAffected > 0;
+        using var command = new SqlCommand("sp_MarkAllAsRead", conn);
+
+        command.CommandType = CommandType.StoredProcedure;
+        
+        var now = DateTime.UtcNow;
+        command.Parameters.AddWithValue("@ReadAt", now);
+        command.Parameters.AddWithValue("@UpdatedAt", now);
+        command.Parameters.AddWithValue("@UserId", userId);
+
+        await conn.OpenAsync();
+
+        int affectedRows = await command.ExecuteNonQueryAsync();
+        return affectedRows > 0;
     }
 
-    /// <summary>
+
     /// Mark a specific notification as read
-    /// </summary>
-    public async Task<bool> MarkAsReadAsync(string targetUserId, int id)
+    public async Task<bool> MarkAsReadAsync(string userId, int id)
     {
-        const string sql = """
-            UPDATE Notifications
-            SET IsRead = 1, ReadAt = @readAt, UpdatedAt = @updatedAt
-            WHERE Id = @id AND UserId = @targetUserId;
-        """;
-
         using var conn = new SqlConnection(_connectionString);
-        var rowsAffected = await conn.ExecuteAsync(
-            sql, 
-            new { id, targetUserId, readAt = DateTime.UtcNow, updatedAt = DateTime.UtcNow }
-        );
-        return rowsAffected > 0;
+        using var command = new SqlCommand("sp_MarkAsRead", conn);
+
+        command.CommandType = CommandType.StoredProcedure;
+        
+        var now = DateTime.UtcNow;
+        command.Parameters.AddWithValue("@ReadAt", now);
+        command.Parameters.AddWithValue("@UpdatedAt", now);
+        command.Parameters.AddWithValue("@Id", id);
+        command.Parameters.AddWithValue("@UserId", userId);
+
+        await conn.OpenAsync();
+    
+        int affectedRows = await command.ExecuteNonQueryAsync();
+        return affectedRows > 0;
     }
 
-    /// <summary>
+
     /// Delete all notifications for a user
-    /// </summary>
-    public async Task<bool> DeleteAllNotificationsAsync(string targetUserId)
+    public async Task<bool> DeleteAllNotificationsAsync(string userId)
     {
-        const string sql = """
-            DELETE FROM Notifications
-            WHERE UserId = @targetUserId;
-        """;
-
         using var conn = new SqlConnection(_connectionString);
-        var rowsAffected = await conn.ExecuteAsync(sql, new { targetUserId });
-        return rowsAffected > 0;
+        using var command = new SqlCommand("sp_DeleteAllNotifications", conn);
+
+        command.CommandType = CommandType.StoredProcedure;
+        command.Parameters.AddWithValue("@UserId", userId);
+    
+        await conn.OpenAsync();
+
+        int affectedRows = await command.ExecuteNonQueryAsync(); 
+        return affectedRows > 0;
     }
 
-    /// <summary>
-    /// Delete a specific notification
-    /// </summary>
-    public async Task<bool> DeleteNotificationAsync(string targetUserId, int id)
-    {
-        const string sql = """
-            DELETE FROM Notifications 
-            WHERE UserId = @targetUserId AND Id = @id;
-        """;
 
+    /// Delete a specific notification
+    public async Task<bool> DeleteNotificationAsync(string userId, int id)
+    {
         using var conn = new SqlConnection(_connectionString);
-        var rowsAffected = await conn.ExecuteAsync(sql, new { targetUserId, id });
-        return rowsAffected > 0;
+        using var command = new SqlCommand("sp_DeleteNotification", conn);
+
+        command.CommandType = CommandType.StoredProcedure;
+        command.Parameters.AddWithValue("@UserId", userId);
+        command.Parameters.AddWithValue("@Id", id);
+        
+        await conn.OpenAsync();
+        
+        var affectedRows = await command.ExecuteNonQueryAsync();
+        return affectedRows > 0;
     }
 }

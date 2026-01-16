@@ -1,6 +1,8 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
 using NotificationService.Models;
+using NotificationService.Interfaces;
+using System.Data;
 
 namespace NotificationService.Repositories
 {
@@ -14,111 +16,165 @@ namespace NotificationService.Repositories
                 ?? throw new InvalidOperationException("Connection string 'NotificationDatabase' is not configured.");
         }
 
+
         public async Task<IEnumerable<User?>> GetAllUserAsync()
         {
-            const string sql = """
-                SELECT * FROM Users
-                ORDER BY Id;
-            """;
+            var users = new List<User>();
 
             using var conn = new SqlConnection(_connectionString);
-            return await conn.QueryAsync<User>(sql);
+            using var command = new SqlCommand("sp_GetAllUsers", conn);
+
+            command.CommandType= CommandType.StoredProcedure;
+
+            await conn.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                int emailIdx = reader.GetOrdinal("Email");
+                int phoneNumberIdx = reader.GetOrdinal("PhoneNumber");
+                
+                users.Add(new User
+                {
+                    Id = reader.GetString("Id"),
+                    Email = reader.IsDBNull(emailIdx) ? null : reader.GetString(emailIdx),
+                    PhoneNumber = reader.IsDBNull(phoneNumberIdx) ? null : reader.GetString(phoneNumberIdx)
+                });
+            }
+
+            return users;
         }
+
 
         public async Task<User?> GetUserByIdAsync(string userId)
         {
-            const string sql = """
-                SELECT * FROM Users
-                WHERE Id = @userId;
-            """;
-
             using var conn = new SqlConnection(_connectionString);
-            return await conn.QuerySingleOrDefaultAsync<User>(sql, new { userId });
+            using var command = new SqlCommand("sp_GetUserById", conn);
+
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.AddWithValue("@Id", userId);
+            
+            await conn.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                int emailIdx = reader.GetOrdinal("Email");
+                int phoneNumberIdx = reader.GetOrdinal("PhoneNumber");
+                
+                return new User
+                {
+                    Id = reader.GetString("Id"),
+                    Email = reader.IsDBNull(emailIdx) ? null : reader.GetString(emailIdx),
+                    PhoneNumber = reader.IsDBNull(phoneNumberIdx) ? null : reader.GetString(phoneNumberIdx)
+                };
+            }
+
+            return null;
         }
 
-        public async Task<User> CreateUserAsync(User user)
+
+        public async Task<(string? Email, string? PhoneNumber)?> GetUserContactAsync(string userId)
         {
-            const string sql = """
-                INSERT INTO Users (Id, Email, PhoneNumber)
-                VALUES (@Id, @Email, @PhoneNumber);
-            """;
-
             using var conn = new SqlConnection(_connectionString);
-            await conn.ExecuteAsync(sql, user);
-            return user;
+            using var command = new SqlCommand("sp_GetUserContact", conn);
+
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.AddWithValue("@Id", userId);
+
+            await conn.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+                return null;
+
+            int emailIdx = reader.GetOrdinal("Email");
+            int phoneNumberIdx = reader.GetOrdinal("PhoneNumber");
+
+            return(
+                reader.IsDBNull(emailIdx) ? null : reader.GetString(emailIdx),
+                reader.IsDBNull(phoneNumberIdx) ? null : reader.GetString(phoneNumberIdx)
+            );
         }
+
+
+        public async Task<User?> CreateUserAsync(User user)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var command = new SqlCommand("sp_CreateUser", conn);
+            
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.AddWithValue("@Id", user.Id);
+            command.Parameters.AddWithValue("@Email", user.Email);
+            command.Parameters.AddWithValue("@PhoneNumber", user.PhoneNumber);
+
+            await conn.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                return new User
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber
+                };
+            }
+            
+            return null;
+        }
+
 
         public async Task<User> GetOrCreateUserAsync(string userId, string? email = null, string? phoneNumber = null)
         {
             var existingUser = await GetUserByIdAsync(userId);
             if (existingUser != null)
-            {
-                // If user exists but new email/phone are provided, update them
-                if (!string.IsNullOrEmpty(email) || !string.IsNullOrEmpty(phoneNumber))
-                {
-                    const string updateSql = """
-                        UPDATE Users 
-                        SET Email = COALESCE(@Email, Email), 
-                            PhoneNumber = COALESCE(@PhoneNumber, PhoneNumber)
-                        WHERE Id = @Id;
-                    """;
-
-                    using var conn = new SqlConnection(_connectionString);
-                    await conn.ExecuteAsync(updateSql, new { Id = userId, Email = email, PhoneNumber = phoneNumber });
-                    
-                    // Return updated user
-                    return await GetUserByIdAsync(userId) ?? existingUser;
-                }
                 return existingUser;
-            }
-
-            var newUser = new User
+            
+            var user = new User
             {
                 Id = userId,
                 Email = email,
                 PhoneNumber = phoneNumber
             };
 
-            return await CreateUserAsync(newUser);
+            return await CreateUserAsync(user);
         }
 
-        public async Task<(string? Email, string? PhoneNumber)> GetUserContactAsync(string userId)
-        {
-            const string sql = """
-                SELECT Email, PhoneNumber FROM Users
-                WHERE Id = @userId;
-            """;
-
-            using var conn = new SqlConnection(_connectionString);
-            var user = await conn.QuerySingleOrDefaultAsync<User>(sql, new { userId });
-            
-            return user != null ? (user.Email, user.PhoneNumber) : (null, null);
-        }
-
+    
         public async Task<bool> UpdateUserAsync(string userId, string? email = null, string? phoneNumber = null)
         {
-            const string sql = """
-                UPDATE Users 
-                SET Email = COALESCE(@Email, Email), 
-                    PhoneNumber = COALESCE(@PhoneNumber, PhoneNumber)
-                WHERE Id = @Id;
-            """;
-
             using var conn = new SqlConnection(_connectionString);
-            var result = await conn.ExecuteAsync(sql, new { Id = userId, Email = email, PhoneNumber = phoneNumber });
-            return result > 0;
+            using var command = new SqlCommand("sp_UpdateUser", conn);
+
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.AddWithValue("@Id", userId);
+            command.Parameters.AddWithValue("@Email", email ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@PhoneNumber", phoneNumber ?? (object)DBNull.Value);
+
+            await conn.OpenAsync();
+
+            int affectedRows = await command.ExecuteNonQueryAsync();
+            return affectedRows > 0; 
         }
+
 
         public async Task<bool> DeleteUserAsync(string userId)
         {
-            const string sql = """
-                DELETE FROM Users
-                WHERE Id = @userId;
-            """;
-
             using var conn = new SqlConnection(_connectionString);
-            var result = await conn.ExecuteAsync(sql, new { userId });
-            return result > 0;
+            using var command = new SqlCommand("sp_DeleteUser", conn);
+
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.AddWithValue("@UserId", userId);
+
+            await conn.OpenAsync();
+
+            int affectedRows = await command.ExecuteNonQueryAsync();
+            return affectedRows > 0; 
         }
     }
 }
