@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using NotificationService.DTOs;
 using System.Security.Claims;
 using NotificationService.Interfaces;
-using NuGet.Protocol.Core.Types;
 
 namespace NotificationService.Controllers;
 
@@ -28,17 +27,41 @@ public class SMSController : ControllerBase
     }
 
 
-    /// Send Telegram message notification to user
+    /// Send SMS notification to user
     [HttpPost("send-sms")]
     public async Task<IActionResult> SendSMSNotification(CreateNotificationDTO notificationDTO)
     {
         var userId = GetUserId();
 
-        var notificationId = await _smsService.SendSMSAsync(userId, notificationDTO);
-        return Ok(new
+        try
         {
-            message = "Message sent through SMS.",
-            notificationId
-        });          
+            var notificationId = await _smsService.SendSMSAsync(userId, notificationDTO);
+            return Ok(new
+            {
+                message = "Message sent through SMS.",
+                notificationId
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(502, new 
+            { 
+                message = "Failed to send SMS. SMS provider error.",
+                error = ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                message = "Failed to send SMS.",
+                error = ex.Message,
+                innerException = ex.InnerException?.Message
+            });
+        }
     }
 }

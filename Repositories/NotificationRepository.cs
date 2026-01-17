@@ -17,7 +17,6 @@ public class NotificationRepository : INotificationRepository
     }
 
 
-    /// Get all notifications for a specific user ordered by creation date (newest first)
     public async Task<IEnumerable<Notification>> GetAllNotificationsAsync(string userId)
     {
         var notifications = new List<Notification>();
@@ -52,7 +51,6 @@ public class NotificationRepository : INotificationRepository
     }
 
 
-    /// Get a specific notification by ID for a user
     public async Task<Notification?> GetNotificationAsync(string userId, int id)
     {
         using var conn = new SqlConnection(_connectionString);
@@ -86,7 +84,6 @@ public class NotificationRepository : INotificationRepository
     }
 
 
-    /// Add a new notification to the database
     public async Task<int> AddNotificationAsync(Notification notification)
     {
         using var conn = new SqlConnection(_connectionString);
@@ -107,7 +104,7 @@ public class NotificationRepository : INotificationRepository
         return id;
     }
 
-    /// Update an existing notification
+
     public async Task<int> UpdateNotificationAsync(Notification notification)
     {
         using var conn = new SqlConnection(_connectionString);
@@ -128,7 +125,7 @@ public class NotificationRepository : INotificationRepository
         return id;
     }
 
-    // Mark all unread notifications as read for a user
+
     public async Task<bool> MarkAllAsReadAsync(string userId)
     {
         using var conn = new SqlConnection(_connectionString);
@@ -148,7 +145,6 @@ public class NotificationRepository : INotificationRepository
     }
 
 
-    /// Mark a specific notification as read
     public async Task<bool> MarkAsReadAsync(string userId, int id)
     {
         using var conn = new SqlConnection(_connectionString);
@@ -169,7 +165,6 @@ public class NotificationRepository : INotificationRepository
     }
 
 
-    /// Delete all notifications for a user
     public async Task<bool> DeleteAllNotificationsAsync(string userId)
     {
         using var conn = new SqlConnection(_connectionString);
@@ -185,7 +180,6 @@ public class NotificationRepository : INotificationRepository
     }
 
 
-    /// Delete a specific notification
     public async Task<bool> DeleteNotificationAsync(string userId, int id)
     {
         using var conn = new SqlConnection(_connectionString);
