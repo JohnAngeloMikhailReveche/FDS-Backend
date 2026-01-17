@@ -102,7 +102,6 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Included from remote (Good practice to keep this)
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
