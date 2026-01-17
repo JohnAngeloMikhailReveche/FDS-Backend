@@ -1,0 +1,161 @@
+﻿/* =========================
+   CRITICAL: Remove all browser default spacing
+   ========================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+#root {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+}
+
+/* =========================
+   APP CONTAINER - NO TOP/BOTTOM PADDING
+   ========================= */
+.App {
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: center;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* =========================
+   CONSISTENT PAGE SPACING (LEFT & RIGHT)
+   All main page content gets consistent horizontal padding
+   ========================= */
+.page-container,
+.home-page,
+.menu-page,
+.order-page,
+.about-page,
+.contact-page,
+main,
+section {
+    padding-left: 5%;
+    padding-right: 5%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Exception: Full-width elements that shouldn't have padding */
+.navbar,
+.menu-controls-wrapper,
+.hero,
+.footer,
+.full-width {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Navbar keeps its own internal padding */
+.navbar {
+    padding-left: 5% !important;
+    padding-right: 5% !important;
+}
+
+/* =========================
+   RESPONSIVE HORIZONTAL SPACING
+   ========================= */
+
+/* Desktop - 5% padding (comfortable spacing) */
+@media (min-width: 1025px) {
+    .page-container,
+    .home-page,
+    .menu-page,
+    .order-page,
+    main,
+    section {
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+}
+
+/* Tablet - 4% padding (slightly less space) */
+@media (max-width: 1024px) {
+    .page-container,
+    .home-page,
+    .menu-page,
+    .order-page,
+    main,
+    section {
+        padding-left: 4%;
+        padding-right: 4%;
+    }
+}
+
+/* Mobile - 5% padding (more breathing room on small screens) */
+@media (max-width: 768px) {
+    .page-container,
+    .home-page,
+    .menu-page,
+    .order-page,
+    main,
+    section {
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+}
+
+/* Small Mobile - 4% padding (maximize screen space) */
+@media (max-width: 480px) {
+    .page-container,
+    .home-page,
+    .menu-page,
+    .order-page,
+    main,
+    section {
+        padding-left: 4%;
+        padding-right: 4%;
+    }
+}
+
+/* =========================
+   ORIGINAL APP STYLES
+   ========================= */
+.App-logo {
+    height: 40vmin;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
+}
+
+.App-header {
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}
+
+.App-link {
+    color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

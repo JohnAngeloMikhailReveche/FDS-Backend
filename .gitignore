@@ -1,0 +1,31 @@
+﻿## Ignore Visual Studio temporary files, build results
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio cache/options
+.vs/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+bld/
+
+# NuGet Packages
+*.nupkg
+packages/
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Others
+*.log
+appsettings.Development.json

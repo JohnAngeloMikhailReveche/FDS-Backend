@@ -1,0 +1,236 @@
+﻿.manage-users-container {
+    padding: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
+    background-color: #F5E6D3;
+    min-height: 100vh;
+}
+
+.manage-users-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+    .manage-users-header h1 {
+        font-size: 32px;
+        color: #4E3A30;
+        margin: 0;
+    }
+
+.back-btn {
+    padding: 10px 20px;
+    background-color: #8B6F47;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+    .back-btn:hover {
+        background-color: #6B4F37;
+    }
+
+/* Filters Section */
+.filters-section {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+    .filter-group label {
+        font-size: 14px;
+        color: #4E3A30;
+        font-weight: 600;
+    }
+
+.role-filter,
+.search-input {
+    padding: 10px 15px;
+    border: 1px solid #D4C4B0;
+    border-radius: 8px;
+    background-color: white;
+    font-size: 14px;
+    min-width: 200px;
+}
+
+    .role-filter:focus,
+    .search-input:focus {
+        outline: none;
+        border-color: #8B6F47;
+    }
+
+/* User Count */
+.user-count {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #6B5441;
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+    color: #6B5441;
+}
+
+/* Users Table */
+.users-table-container {
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .users-table thead {
+        background-color: #8B6F47;
+        color: white;
+    }
+
+    .users-table th {
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .users-table tbody tr {
+        border-bottom: 1px solid #E8DCC8;
+        transition: background-color 0.2s;
+    }
+
+        .users-table tbody tr:hover {
+            background-color: #F9F5EE;
+        }
+
+    .users-table td {
+        padding: 15px;
+        font-size: 14px;
+        color: #4E3A30;
+    }
+
+/* Badges */
+.role-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.role-customer {
+    background-color: #E3F2FD;
+    color: #1976D2;
+}
+
+.role-rider {
+    background-color: #FFF3E0;
+    color: #F57C00;
+}
+
+.role-admin {
+    background-color: #F3E5F5;
+    color: #7B1FA2;
+}
+
+.role-superadmin {
+    background-color: #FFEBEE;
+    color: #C62828;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-active {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+}
+
+.status-inactive {
+    background-color: #FFEBEE;
+    color: #C62828;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+    .action-btn:hover {
+        transform: scale(1.1);
+    }
+
+.activate-btn {
+    background-color: #E8F5E9;
+}
+
+    .activate-btn:hover {
+        background-color: #C8E6C9;
+    }
+
+.deactivate-btn {
+    background-color: #FFF3E0;
+}
+
+    .deactivate-btn:hover {
+        background-color: #FFE0B2;
+    }
+
+.delete-btn {
+    background-color: #FFEBEE;
+}
+
+    .delete-btn:hover {
+        background-color: #FFCDD2;
+    }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .manage-users-container {
+        padding: 15px;
+    }
+
+    .filters-section {
+        flex-direction: column;
+    }
+
+    .users-table-container {
+        overflow-x: auto;
+    }
+
+    .users-table {
+        min-width: 800px;
+    }
+}
