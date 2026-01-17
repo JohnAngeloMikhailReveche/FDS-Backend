@@ -100,7 +100,10 @@ public class NotificationRepository : INotificationRepository
 
         await conn.OpenAsync();
     
-        int id = (int)await command.ExecuteScalarAsync();
+        var result = await command.ExecuteScalarAsync();
+        if (result == null)
+            throw new InvalidOperationException("Failed to add notification: no ID returned.");
+        int id = (int)result;
         return id;
     }
 
@@ -121,7 +124,10 @@ public class NotificationRepository : INotificationRepository
 
         await conn.OpenAsync();
 
-        int id = (int)await command.ExecuteScalarAsync();
+        var result = await command.ExecuteScalarAsync();
+        if (result == null)
+            throw new InvalidOperationException("Failed to update notification: no ID returned.");
+        int id = (int)result;
         return id;
     }
 

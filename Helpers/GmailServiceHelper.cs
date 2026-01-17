@@ -5,6 +5,8 @@ using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using System.Text;
 
+
+// Made by Kyle Christian Casipit
 namespace NotificationService.Helpers
 {
     public class GmailEmailService

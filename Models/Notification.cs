@@ -9,7 +9,7 @@ namespace NotificationService.Models
         public string Subject { get; set; } = string.Empty;
         public string Body { get; set; } = string.Empty;
         public string Type { get; set; } = "via";
-        public bool IsRead { get; set; } 
+        public bool IsRead { get; set; } = false;
         public DateTime? ReadAt { get; set; } 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

@@ -1,5 +1,6 @@
 using NotificationService.DTOs;
 using NotificationService.Interfaces;
+using NotificationService.Mapping;
 using NotificationService.Models;
 
 namespace NotificationService.Services;
@@ -14,9 +15,10 @@ public class UserService : IUserService
     }
 
 
-    public async Task<IEnumerable<User?>> GetAllAsync()
+    public async Task<IEnumerable<UserResponseDTO>> GetAllAsync()
     {
-        return await _userRepository.GetAllUserAsync();
+        var users = await _userRepository.GetAllUserAsync();
+        return users.Where(u => u != null).Select(u => u!.ToResponseDTO());
     }
 
 

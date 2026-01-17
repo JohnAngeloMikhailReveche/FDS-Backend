@@ -142,7 +142,8 @@ namespace NotificationService.Repositories
                 PhoneNumber = phoneNumber
             };
 
-            return await CreateUserAsync(user);
+            var createdUser = await CreateUserAsync(user);
+            return createdUser ?? throw new InvalidOperationException("Failed to create user.");
         }
 
     

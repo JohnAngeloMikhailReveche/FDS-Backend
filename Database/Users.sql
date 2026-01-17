@@ -8,6 +8,7 @@
 -- =============================================
 -- VIEWS
 -- =============================================
+USE NotificationDB;
 
 CREATE OR ALTER VIEW vw_GetAllUsers
 AS 

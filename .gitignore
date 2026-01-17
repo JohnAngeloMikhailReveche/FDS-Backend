@@ -7,3 +7,4 @@ appsettings.json
 *.config
 appsettings.json
 appsettings.*.json
+token.json/
