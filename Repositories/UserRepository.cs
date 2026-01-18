@@ -22,7 +22,7 @@ namespace NotificationService.Repositories
             var users = new List<User>();
 
             using var conn = new SqlConnection(_connectionString);
-            using var command = new SqlCommand("sp_GetAllUsers", conn);
+            using var command = new SqlCommand("dbo.usp_GetAllUsers", conn);
 
             command.CommandType= CommandType.StoredProcedure;
 
@@ -50,7 +50,7 @@ namespace NotificationService.Repositories
         public async Task<User?> GetUserByIdAsync(string userId)
         {
             using var conn = new SqlConnection(_connectionString);
-            using var command = new SqlCommand("sp_GetUserById", conn);
+            using var command = new SqlCommand("dbo.usp_GetUserById", conn);
 
             command.CommandType = CommandType.StoredProcedure;
             command.Parameters.AddWithValue("@Id", userId);
@@ -79,7 +79,7 @@ namespace NotificationService.Repositories
         public async Task<(string? Email, string? PhoneNumber)?> GetUserContactAsync(string userId)
         {
             using var conn = new SqlConnection(_connectionString);
-            using var command = new SqlCommand("sp_GetUserContact", conn);
+            using var command = new SqlCommand("dbo.usp_GetUserContact", conn);
 
             command.CommandType = CommandType.StoredProcedure;
             command.Parameters.AddWithValue("@Id", userId);
@@ -104,7 +104,7 @@ namespace NotificationService.Repositories
         public async Task<User?> CreateUserAsync(User user)
         {
             using var conn = new SqlConnection(_connectionString);
-            using var command = new SqlCommand("sp_CreateUser", conn);
+            using var command = new SqlCommand("dbo.usp_CreateUser", conn);
             
             command.CommandType = CommandType.StoredProcedure;
             command.Parameters.AddWithValue("@Id", user.Id);
@@ -150,7 +150,7 @@ namespace NotificationService.Repositories
         public async Task<bool> UpdateUserAsync(string userId, string? email = null, string? phoneNumber = null)
         {
             using var conn = new SqlConnection(_connectionString);
-            using var command = new SqlCommand("sp_UpdateUser", conn);
+            using var command = new SqlCommand("dbo.usp_UpdateUser", conn);
 
             command.CommandType = CommandType.StoredProcedure;
             command.Parameters.AddWithValue("@Id", userId);
@@ -167,7 +167,7 @@ namespace NotificationService.Repositories
         public async Task<bool> DeleteUserAsync(string userId)
         {
             using var conn = new SqlConnection(_connectionString);
-            using var command = new SqlCommand("sp_DeleteUser", conn);
+            using var command = new SqlCommand("dbo.usp_DeleteUser", conn);
 
             command.CommandType = CommandType.StoredProcedure;
             command.Parameters.AddWithValue("@Id", userId);

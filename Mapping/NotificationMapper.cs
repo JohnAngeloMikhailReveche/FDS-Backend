@@ -5,7 +5,8 @@ namespace NotificationService.Mapping
 {
     public static class NotificationMapping
     {
-        public static NotificationResponseDTO ToResponseDTO(this Notification notification)
+        public static NotificationResponseDTO ToResponseDTO(
+            this Notification notification)
         {
             return new NotificationResponseDTO
             {
@@ -17,7 +18,6 @@ namespace NotificationService.Mapping
                 IsRead = notification.IsRead,
                 ReadAt = notification.ReadAt,
                 CreatedAt = notification.CreatedAt,
-                UpdatedAt = notification.UpdatedAt
             };
         }
     }

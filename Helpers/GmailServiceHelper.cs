@@ -24,7 +24,7 @@ namespace NotificationService.Helpers
             _config = config;
         }
 
-        public async Task SendEmailAsync(string toEmail, string subject, string body)
+        public async Task<bool> SendEmailAsync(string toEmail, string subject, string body)
         {
             if (string.IsNullOrWhiteSpace(toEmail))
                 throw new ArgumentException("Email address cannot be empty.");
@@ -68,6 +68,7 @@ namespace NotificationService.Helpers
             };
 
             await service.Users.Messages.Send(message, "me").ExecuteAsync();
+            return true;
         }
 
         private string CreateEmail(string user, string subject, string bodyPlainText)

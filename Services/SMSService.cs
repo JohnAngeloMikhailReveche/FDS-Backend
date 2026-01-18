@@ -55,7 +55,7 @@ public class SMSService : ISMSService
             Body = notificationDTO.Body,
             Type = "SMS",
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = null,
+            ReadAt = null,
             IsRead = false
         };
 

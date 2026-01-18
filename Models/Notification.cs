@@ -12,7 +12,6 @@ namespace NotificationService.Models
         public bool IsRead { get; set; } = false;
         public DateTime? ReadAt { get; set; } 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
 
         // Foreign Key
         public string UserId { get; set; } = string.Empty;

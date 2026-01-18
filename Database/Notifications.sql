@@ -9,10 +9,11 @@
 -- VIEWS
 -- =============================================
 USE NotificationDB;
+GO
 
-CREATE OR ALTER VIEW vw_GetAllNotifications
+CREATE OR ALTER VIEW dbo.vw_GetAllNotifications
 AS
-SELECT * FROM Notifications;
+SELECT * FROM dbo.Notifications;
 
 GO
 
@@ -20,23 +21,23 @@ GO
 -- STORED PROCEDURES - Query Operations
 -- =============================================
 
-CREATE OR ALTER PROCEDURE sp_GetAllNotifications
+CREATE OR ALTER PROCEDURE dbo.usp_GetAllNotifications
     @UserId NVARCHAR(100)
 AS
 BEGIN
-    SELECT * FROM vw_GetAllNotifications
+    SELECT * FROM dbo.vw_GetAllNotifications
     WHERE UserId = @UserId
     ORDER BY CreatedAt DESC;
 END
 
 GO
 
-CREATE OR ALTER PROCEDURE sp_GetNotification
+CREATE OR ALTER PROCEDURE dbo.usp_GetNotification
     @UserId NVARCHAR(101),
     @Id INT
 AS 
 BEGIN 
-    SELECT * FROM vw_GetAllNotifications
+    SELECT * FROM dbo.vw_GetAllNotifications
     WHERE UserId = @UserId AND Id = @Id;
 END
 
@@ -46,42 +47,18 @@ GO
 -- STORED PROCEDURES - Command Operations
 -- =============================================
 
-CREATE OR ALTER PROCEDURE sp_AddNotification
+CREATE OR ALTER PROCEDURE dbo.usp_AddNotification
     @UserId NVARCHAR(100),
     @Type NVARCHAR(100),
     @Subject NVARCHAR(100),
     @Body NVARCHAR(100),
     @IsRead INT,
     @CreatedAt DATETIME,
-    @UpdatedAt DATETIME NULL
+    @ReadAt DATETIME NULL
 AS 
 BEGIN
-    INSERT INTO Notifications(UserId, Type, Subject, Body, IsRead, CreatedAt, UpdatedAt)
-    VALUES(@UserId, @Type, @Subject, @Body, @IsRead, @CreatedAt, @UpdatedAt);
-    SELECT CAST(SCOPE_IDENTITY() AS INT);
-END
-
-GO
-
-CREATE OR ALTER PROCEDURE sp_UpdateNotification
-    @Type NVARCHAR(100),
-    @Subject NVARCHAR(100),
-    @Body NVARCHAR(100),
-    @IsRead INT,
-    @ReadAt DATETIME,
-    @UpdatedAt DATETIME,
-    @Id INT,
-    @UserId NVARCHAR(100)
-AS
-BEGIN
-    UPDATE Notifications
-    SET Type = @Type,
-        Subject = @Subject,
-        Body = @Body,
-        IsRead = @IsRead,
-        ReadAt = @ReadAt,
-        UpdatedAt = @UpdatedAt
-    WHERE Id = @Id AND UserId = @UserId;
+    INSERT INTO dbo.Notifications(UserId, Type, Subject, Body, IsRead, CreatedAt, ReadAt)
+    VALUES(@UserId, @Type, @Subject, @Body, @IsRead, @CreatedAt, @ReadAt);
     SELECT CAST(SCOPE_IDENTITY() AS INT);
 END
 
@@ -91,28 +68,26 @@ GO
 -- STORED PROCEDURES - Mark as Read Operations
 -- =============================================
 
-CREATE OR ALTER PROCEDURE sp_MarkAsRead
+CREATE OR ALTER PROCEDURE dbo.usp_MarkAsRead
     @ReadAt DATETIME NULL,
-    @UpdatedAt DATETIME NULL,
     @Id INT,
     @UserId NVARCHAR(100)
 AS
 BEGIN
-    UPDATE Notifications
-    SET IsRead = 1, ReadAt = @ReadAt, UpdatedAt = @UpdatedAt
+    UPDATE dbo.Notifications
+    SET IsRead = 1, ReadAt = @ReadAt
     WHERE Id = @Id AND UserId = @UserId;
 END
 
 GO
 
-CREATE OR ALTER PROCEDURE sp_MarkAllAsRead
+CREATE OR ALTER PROCEDURE dbo.usp_MarkAllAsRead
     @ReadAt DATETIME NULL,
-    @UpdatedAt DATETIME NULL,
     @UserId NVARCHAR(100)
 AS 
 BEGIN 
-    UPDATE Notifications
-    SET IsRead = 1, ReadAt = @ReadAt, UpdatedAt = @UpdatedAt
+    UPDATE dbo.Notifications
+    SET IsRead = 1, ReadAt = @ReadAt
     WHERE UserId = @UserId AND IsRead = 0;
 END
 
@@ -122,22 +97,22 @@ GO
 -- STORED PROCEDURES - Delete Operations
 -- =============================================
 
-CREATE OR ALTER PROCEDURE sp_DeleteNotification
+CREATE OR ALTER PROCEDURE dbo.usp_DeleteNotification
     @UserId NVARCHAR(100),
     @Id INT
 AS
 BEGIN 
-    DELETE FROM Notifications
+    DELETE FROM dbo.Notifications
     WHERE UserId = @UserId AND Id = @Id;
 END
 
 GO
 
-CREATE OR ALTER PROCEDURE sp_DeleteAllNotifications
+CREATE OR ALTER PROCEDURE dbo.usp_DeleteAllNotifications
     @UserId NVARCHAR(100)
 AS
 BEGIN
-    DELETE FROM Notifications
+    DELETE FROM dbo.Notifications
     WHERE UserId = @UserId;
 END
 

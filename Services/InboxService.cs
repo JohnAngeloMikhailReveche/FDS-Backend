@@ -45,7 +45,6 @@ public class InboxService : IInboxService
             Type = "In-App",
             CreatedAt = DateTime.UtcNow,
             ReadAt = null,
-            UpdatedAt = null,
             IsRead = false
         };
 

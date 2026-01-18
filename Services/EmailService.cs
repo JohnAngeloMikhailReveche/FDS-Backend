@@ -47,11 +47,13 @@ public class EmailService : IEmailService
         if (!MailAddress.TryCreate(email, out _))
             throw new InvalidOperationException("Invalid email address.");
 
-         await _gmail.SendEmailAsync(
+        var success = await _gmail.SendEmailAsync(
             email,
             notificationDTO.Subject,
             notificationDTO.Body
         );
+        if (!success)
+            throw new InvalidOperationException("Failed to send a email.");
 
         var notification = new Notification
         {
@@ -60,7 +62,7 @@ public class EmailService : IEmailService
             Body = notificationDTO.Body,
             Type = "Email",
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = null,
+            ReadAt = null,
             IsRead = false
         };
 

@@ -40,10 +40,10 @@ public class UserService : IUserService
     }
 
 
-    public async Task<User?> UpdateAsync(string userId, CreateUserDTO userDTO)
+    public async Task<UserResponseDTO?> UpdateAsync(string userId, CreateUserDTO userDTO)
     {
-        var existingUser = await _userRepository.GetUserByIdAsync(userId);
-        if (existingUser == null)
+        var user = await _userRepository.GetUserByIdAsync(userId);
+        if (user == null)
             return null;
         
         var success = await _userRepository.UpdateUserAsync(
@@ -54,8 +54,8 @@ public class UserService : IUserService
 
         if (!success)
             throw new Exception("Failed to update user.");
-
-        return await _userRepository.GetUserByIdAsync(userId);
+    
+        return user?.ToResponseDTO();
     }
 
 

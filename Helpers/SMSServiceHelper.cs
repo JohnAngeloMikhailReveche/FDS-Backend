@@ -25,12 +25,12 @@ public class SemaphoreSMSService
         if (string.IsNullOrWhiteSpace(API_KEY))
             throw new InvalidOperationException("Semaphore API key is not configured.");
 
-        var values = new Dictionary<string, string>
+        var values = new Dictionary<string, string> 
         {
             { "apikey", API_KEY },
             { "number", number },
             { "message", message },
-            // { "sendername", "SEMAPHORE" },
+            { "sendername", "Kapebara" },
         };
 
         var content = new FormUrlEncodedContent(values);

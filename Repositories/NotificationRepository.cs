@@ -22,7 +22,7 @@ public class NotificationRepository : INotificationRepository
         var notifications = new List<Notification>();
 
         using var conn = new SqlConnection(_connectionString);
-        using var command = new SqlCommand("sp_GetAllNotifications", conn);
+        using var command = new SqlCommand("dbo.usp_GetAllNotifications", conn);
 
         command.CommandType = CommandType.StoredProcedure;
         command.Parameters.AddWithValue("@UserId", userId);
@@ -42,7 +42,6 @@ public class NotificationRepository : INotificationRepository
                 IsRead = reader.GetBoolean("IsRead"),
                 ReadAt = reader.IsDBNull("ReadAt") ? null : reader.GetDateTime("ReadAt"),
                 CreatedAt = reader.GetDateTime("CreatedAt"),
-                UpdatedAt = reader.IsDBNull("UpdatedAt") ? null : reader.GetDateTime("UpdatedAt"),
                 UserId = reader.GetString("UserId") 
             });
         }
@@ -54,7 +53,7 @@ public class NotificationRepository : INotificationRepository
     public async Task<Notification?> GetNotificationAsync(string userId, int id)
     {
         using var conn = new SqlConnection(_connectionString);
-        using var command = new SqlCommand("sp_GetNotification", conn);
+        using var command = new SqlCommand("dbo.usp_GetNotification", conn);
 
         command.CommandType = CommandType.StoredProcedure;
         command.Parameters.AddWithValue("@UserId", userId);
@@ -75,7 +74,6 @@ public class NotificationRepository : INotificationRepository
                 IsRead = reader.GetBoolean("IsRead"),
                 ReadAt = reader.IsDBNull("ReadAt") ? null : reader.GetDateTime("ReadAt"),
                 CreatedAt = reader.GetDateTime("CreatedAt"),
-                UpdatedAt = reader.IsDBNull("UpdatedAt") ? null : reader.GetDateTime("UpdatedAt"),
                 UserId = reader.GetString("UserId")
             };
         }
@@ -87,7 +85,7 @@ public class NotificationRepository : INotificationRepository
     public async Task<int> AddNotificationAsync(Notification notification)
     {
         using var conn = new SqlConnection(_connectionString);
-        using var command = new SqlCommand("sp_AddNotification", conn);
+        using var command = new SqlCommand("dbo.usp_AddNotification", conn);
 
         command.CommandType = CommandType.StoredProcedure;
         command.Parameters.AddWithValue("@UserId", notification.UserId);
@@ -96,7 +94,7 @@ public class NotificationRepository : INotificationRepository
         command.Parameters.AddWithValue("@Body", notification.Body);
         command.Parameters.AddWithValue("@IsRead", notification.IsRead);
         command.Parameters.AddWithValue("@CreatedAt", notification.CreatedAt);
-        command.Parameters.AddWithValue("@UpdatedAt", notification.UpdatedAt ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("@ReadAt", notification.ReadAt ?? (object)DBNull.Value);
 
         await conn.OpenAsync();
     
@@ -108,40 +106,15 @@ public class NotificationRepository : INotificationRepository
     }
 
 
-    public async Task<int> UpdateNotificationAsync(Notification notification)
-    {
-        using var conn = new SqlConnection(_connectionString);
-        using var command = new SqlCommand("sp_UpdateNotification", conn);
-
-        command.CommandType = CommandType.StoredProcedure;
-        command.Parameters.AddWithValue("@UserId", notification.UserId);
-        command.Parameters.AddWithValue("@Type", notification.Type);
-        command.Parameters.AddWithValue("@Subject", notification.Subject);
-        command.Parameters.AddWithValue("@Body", notification.Body);
-        command.Parameters.AddWithValue("@IsRead", notification.IsRead);
-        command.Parameters.AddWithValue("@CreatedAt", notification.CreatedAt);
-        command.Parameters.AddWithValue("@UpdatedAt", notification.UpdatedAt);
-
-        await conn.OpenAsync();
-
-        var result = await command.ExecuteScalarAsync();
-        if (result == null)
-            throw new InvalidOperationException("Failed to update notification: no ID returned.");
-        int id = (int)result;
-        return id;
-    }
-
-
     public async Task<bool> MarkAllAsReadAsync(string userId)
     {
         using var conn = new SqlConnection(_connectionString);
-        using var command = new SqlCommand("sp_MarkAllAsRead", conn);
+        using var command = new SqlCommand("dbo.usp_MarkAllAsRead", conn);
 
         command.CommandType = CommandType.StoredProcedure;
         
         var now = DateTime.UtcNow;
         command.Parameters.AddWithValue("@ReadAt", now);
-        command.Parameters.AddWithValue("@UpdatedAt", now);
         command.Parameters.AddWithValue("@UserId", userId);
 
         await conn.OpenAsync();
@@ -154,13 +127,12 @@ public class NotificationRepository : INotificationRepository
     public async Task<bool> MarkAsReadAsync(string userId, int id)
     {
         using var conn = new SqlConnection(_connectionString);
-        using var command = new SqlCommand("sp_MarkAsRead", conn);
+        using var command = new SqlCommand("dbo.usp_MarkAsRead", conn);
 
         command.CommandType = CommandType.StoredProcedure;
         
         var now = DateTime.UtcNow;
         command.Parameters.AddWithValue("@ReadAt", now);
-        command.Parameters.AddWithValue("@UpdatedAt", now);
         command.Parameters.AddWithValue("@Id", id);
         command.Parameters.AddWithValue("@UserId", userId);
 
@@ -174,7 +146,7 @@ public class NotificationRepository : INotificationRepository
     public async Task<bool> DeleteAllNotificationsAsync(string userId)
     {
         using var conn = new SqlConnection(_connectionString);
-        using var command = new SqlCommand("sp_DeleteAllNotifications", conn);
+        using var command = new SqlCommand("dbo.usp_DeleteAllNotifications", conn);
 
         command.CommandType = CommandType.StoredProcedure;
         command.Parameters.AddWithValue("@UserId", userId);
@@ -189,7 +161,7 @@ public class NotificationRepository : INotificationRepository
     public async Task<bool> DeleteNotificationAsync(string userId, int id)
     {
         using var conn = new SqlConnection(_connectionString);
-        using var command = new SqlCommand("sp_DeleteNotification", conn);
+        using var command = new SqlCommand("dbo.usp_DeleteNotification", conn);
 
         command.CommandType = CommandType.StoredProcedure;
         command.Parameters.AddWithValue("@UserId", userId);
