@@ -1,0 +1,112 @@
+﻿using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
+using OrderService.Data;
+using OrderService.Models.DTO;
+
+namespace OrderService.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CartController : ControllerBase
+    {
+        private readonly OrderDbContext _db;
+        private readonly IHttpClientFactory _httpFactory;
+        private readonly CartService _cartService;
+
+
+        public CartController(OrderDbContext db, IHttpClientFactory httpFactory)
+        {
+            _db = db;
+            _httpFactory = httpFactory;
+            _cartService = new CartService(db, httpFactory);
+        }
+
+        // Add Item to Cart Endpoint
+        [HttpPost("item/add")]
+        public async Task<IActionResult> AddToCart(int menuItemID, int userID)
+        {
+            try
+            {
+                CartDTO? cart = await _cartService.AddItem(
+                    menuItemID,
+                    userID
+                    );
+
+                if (cart == null)
+                    return BadRequest(new { message = "Cart not found." });
+
+                return Ok(cart);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // View the Cart
+        [HttpGet("user/cart/{userId}")]
+        public async Task<IActionResult> ViewCart(int userId)
+        {
+            var cart = await _cartService.ViewCart(userId);
+
+            if (cart == null)
+            {
+                return NotFound(new { message = "Cart not found." });
+            }
+
+            return Ok(cart);
+        }
+
+        // View the Cart Items
+        [HttpGet("user/cart/items/{userId}")]
+        public async Task<IActionResult> ViewCartItems(int userId)
+        {
+            var cartItems = await _cartService.ViewCartItems(userId);
+
+            if (cartItems == null || !cartItems.Any())
+            {
+                return NotFound(new { message = "Cart is empty." });
+            }
+
+            return Ok(cartItems);
+        }
+
+        // Remove Cart Item
+        [HttpDelete("item/{cartItemID}")]
+        public async Task<IActionResult> RemoveItemFromCart(
+            [FromRoute] int cartItemID,
+            [FromQuery] int userID,
+            [FromQuery] int quantityToRemove
+            )
+        {
+            var cart = await _cartService.RemoveItem(userID, cartItemID, quantityToRemove);
+
+            if (cart == null)
+                return NotFound(new { message = "Item or cart is not found." });
+
+            return Ok(cart);
+        }
+
+
+        // Increase Cart Item Quantity
+        [HttpPatch("item/{cartItemID}/increase")]
+        public async Task<IActionResult> IncreaseItemQuantity(
+                [FromRoute] int cartItemID,
+                [FromQuery] int userID,
+                [FromQuery] int count = 1
+            )
+        {
+            var cart = await _cartService.IncreaseItem(userID, cartItemID, count);
+
+            if (cart == null)
+            {
+                return NotFound(new { message = "Item or the cart is not found." });
+            }
+
+            return Ok(cart);
+        }
+
+
+    }
+}
