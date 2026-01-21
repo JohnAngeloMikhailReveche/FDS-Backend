@@ -28,7 +28,7 @@ namespace OrderService.Services
 
             /* Get Menu Item from MenuService */
             var menuItem = await _menuClient
-                .GetFromJsonAsync<MenuDTO>($"/api/Menu/{menuId}");
+                .GetFromJsonAsync<MenuDTO>($"/api/menu-items/{menuId}");
 
             if (menuItem == null)
             {
@@ -66,7 +66,7 @@ namespace OrderService.Services
                 new SqlParameter("@VariantId", chosenVariant.Id),
                 new SqlParameter("@ItemName", menuItem.name),
                 new SqlParameter("@ItemDescription", menuItem.description),
-                new SqlParameter("@ImgUrl", menuItem.imgUrl),
+                new SqlParameter("@ImgUrl", menuItem.imageUrl),
                 new SqlParameter("@VariantName", chosenVariant.name),
                 new SqlParameter("@VariantPrice", chosenVariant.price),
                 new SqlParameter("@Quantity", 1),
