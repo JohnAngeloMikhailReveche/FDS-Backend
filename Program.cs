@@ -68,11 +68,7 @@ builder.Services.AddAuthorization();
 // Register Services
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IInboxService, InboxService>();
-builder.Services.AddScoped<ISMSService, SMSService>();
 builder.Services.AddScoped<IUserService, UserService>();
-
-// Register SMS Service
-builder.Services.AddScoped<SemaphoreSMSService>();
 
 // Register Gmail Service
 builder.Services.AddScoped<GmailEmailService>();

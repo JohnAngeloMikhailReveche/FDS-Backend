@@ -19,14 +19,14 @@ public class InboxService : IInboxService
     }
 
 
-    public async Task<IEnumerable<NotificationResponseDTO>> GetAllAsync(string userId)
+    public async Task<IEnumerable<ResponseNotificationDTO>> GetAllAsync(string userId)
     {
         var notifications = await _notificationRepository.GetAllNotificationsAsync(userId);
         return notifications.Select(n => n.ToResponseDTO());      
     }    
 
 
-    public async Task<NotificationResponseDTO?> GetByIdAsync(string userId, int id)
+    public async Task<ResponseNotificationDTO?> GetByIdAsync(string userId, int id)
     {
         var notification = await _notificationRepository.GetNotificationAsync(userId, id);
         return notification?.ToResponseDTO();

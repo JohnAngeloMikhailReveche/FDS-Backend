@@ -5,9 +5,9 @@ namespace NotificationService.Mapping
 {
     public static class UserMapping
     {
-        public static UserResponseDTO ToResponseDTO(this User user)
+        public static ResponseUserDTO ToResponseDTO(this User user)
         {
-            return new UserResponseDTO
+            return new ResponseUserDTO
             {
                 Id = user.Id,
                 Email = user.Email,

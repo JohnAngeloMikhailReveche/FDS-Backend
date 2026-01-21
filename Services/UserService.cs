@@ -15,7 +15,7 @@ public class UserService : IUserService
     }
 
 
-    public async Task<IEnumerable<UserResponseDTO>> GetAllAsync()
+    public async Task<IEnumerable<ResponseUserDTO>> GetAllAsync()
     {
         var users = await _userRepository.GetAllUserAsync();
         return users.Where(u => u != null).Select(u => u!.ToResponseDTO());
@@ -40,7 +40,7 @@ public class UserService : IUserService
     }
 
 
-    public async Task<UserResponseDTO?> UpdateAsync(string userId, CreateUserDTO userDTO)
+    public async Task<ResponseUserDTO?> UpdateAsync(string userId, CreateUserDTO userDTO)
     {
         var user = await _userRepository.GetUserByIdAsync(userId);
         if (user == null)

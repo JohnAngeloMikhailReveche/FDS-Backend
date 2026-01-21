@@ -5,8 +5,8 @@ namespace NotificationService.Interfaces;
 
 public interface IInboxService
 {
-    Task<IEnumerable<NotificationResponseDTO>> GetAllAsync(string userId);
-    Task<NotificationResponseDTO?> GetByIdAsync(string userId, int id);
+    Task<IEnumerable<ResponseNotificationDTO>> GetAllAsync(string userId);
+    Task<ResponseNotificationDTO?> GetByIdAsync(string userId, int id);
     Task<Notification> CreateAsync(string userId, CreateNotificationDTO notificationDTO);
     Task<bool> MarkAllAsReadAsync(string userId);
     Task<bool> MarkAsReadAsync(string userId, int id);

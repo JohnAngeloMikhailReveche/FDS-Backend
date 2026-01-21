@@ -1,6 +1,6 @@
 namespace NotificationService.DTOs
 {
-    public class NotificationResponseDTO
+    public class ResponseNotificationDTO
     {
         public int Id { get; set; }
         public string UserId { get; set; } = string.Empty;

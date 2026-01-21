@@ -5,10 +5,10 @@ namespace NotificationService.Mapping
 {
     public static class NotificationMapping
     {
-        public static NotificationResponseDTO ToResponseDTO(
+        public static ResponseNotificationDTO ToResponseDTO(
             this Notification notification)
         {
-            return new NotificationResponseDTO
+            return new ResponseNotificationDTO
             {
                 Id = notification.Id,
                 UserId = notification.UserId,
