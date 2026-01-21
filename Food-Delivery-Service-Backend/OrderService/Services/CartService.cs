@@ -24,7 +24,9 @@ namespace OrderService.Services
                 int userId
             )
         {
+
             /* Get Menu Item from MenuService */
+            /*
             var menuItem = await _menuClient
                 .GetFromJsonAsync<MenuDTO>($"/api/Menu/{menuId}");
 
@@ -32,6 +34,10 @@ namespace OrderService.Services
             {
                 throw new Exception("Item does not exist.");
             }
+            */
+
+            // Check if Available
+            // Get the Variant request from the frontend and check if the menuClient has it then map it towards the variant name, variant price and variant id.
 
             await _db.Database.ExecuteSqlRawAsync(
                 @"EXEC SP_AddItemToCart
@@ -160,7 +166,7 @@ namespace OrderService.Services
                     , @QuantityToRemove",
                 new SqlParameter("@UserId", userID),
                 new SqlParameter("@CartItemId", cartItemID),
-                new SqlParameter("QuantityToRemove", quantityToRemove)
+                new SqlParameter("@QuantityToRemove", quantityToRemove)
                 );
 
             return await ViewCart(userID);
