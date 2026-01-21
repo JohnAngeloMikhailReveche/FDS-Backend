@@ -25,14 +25,14 @@ namespace OrderService.Services
             )
         {
             /* Get Menu Item from MenuService */
-            //var menuItem = await _menuClient
-                //.GetFromJsonAsync<MenuDTO>($"/api/Menu/{menuId}");
+            var menuItem = await _menuClient
+                .GetFromJsonAsync<MenuDTO>($"/api/Menu/{menuId}");
 
-            //if (menuItem == null)
-            //{
-              //  throw new Exception("Item does not exist.");
-            //}
-            /*
+            if (menuItem == null)
+            {
+                throw new Exception("Item does not exist.");
+            }
+
             await _db.Database.ExecuteSqlRawAsync(
                 @"EXEC SP_AddItemToCart
                     @UserId,
@@ -56,7 +56,7 @@ namespace OrderService.Services
                 new SqlParameter("@Quantity", menuItem.quantity),
                 new SqlParameter("@SpecialInstructions", menuItem.specialInstructions)
                 );
-            */
+
             return await ViewCart(userId);
         }
 
