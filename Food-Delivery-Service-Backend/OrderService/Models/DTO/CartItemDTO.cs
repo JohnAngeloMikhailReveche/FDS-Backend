@@ -8,6 +8,7 @@
         public string variant_name { get; set; }
         public decimal variant_price { get; set; }
         public int quantity { get; set; }
+        public string specialInstructions { get; set; }
         public string img_url { get; set; }
     }
 }

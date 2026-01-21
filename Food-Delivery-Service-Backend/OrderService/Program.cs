@@ -26,12 +26,11 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
-/*
+
 builder.Services.AddHttpClient("MenuService", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7280");
 });
-*/
 
 //builder.Services.AddScoped<CartService>();
 builder.Services.AddControllers();

@@ -9,24 +9,24 @@ namespace OrderService.Services
     public class CartService
     {
         private readonly OrderDbContext _db;
-        //private readonly HttpClient _menuClient;
+        private readonly HttpClient _menuClient;
 
-        public CartService(OrderDbContext db) //IHttpClientFactory httpFactory)
+        public CartService(OrderDbContext db, IHttpClientFactory httpFactory)
         {
             _db = db;
-            //_menuClient = httpFactory.CreateClient("MenuService");
+            _menuClient = httpFactory.CreateClient("MenuService");
         }
 
 
         public async Task<CartDTO?> AddItem(
                 int menuId,
-                //int variantId,
-                int userId
+                int variantId,
+                int userId,
+                string specialInstructions
             )
         {
 
             /* Get Menu Item from MenuService */
-            /*
             var menuItem = await _menuClient
                 .GetFromJsonAsync<MenuDTO>($"/api/Menu/{menuId}");
 
@@ -34,10 +34,20 @@ namespace OrderService.Services
             {
                 throw new Exception("Item does not exist.");
             }
-            */
 
             // Check if Available
+            if (menuItem.isAvailable == false)
+            {
+                throw new Exception("Item is not available. Please refer to the Menu.");
+            }
             // Get the Variant request from the frontend and check if the menuClient has it then map it towards the variant name, variant price and variant id.
+            var chosenVariant = menuItem.variants
+                .FirstOrDefault(v => v.Id == variantId);
+
+            if (chosenVariant == null)
+            {
+                throw new Exception("Selected variant does not exist for this menu item.");
+            }
 
             await _db.Database.ExecuteSqlRawAsync(
                 @"EXEC SP_AddItemToCart
@@ -53,14 +63,14 @@ namespace OrderService.Services
                     @SpecialInstructions",
                 new SqlParameter("@UserId", userId),
                 new SqlParameter("@MenuItemId", menuId),
-                new SqlParameter("@VariantId", menuItem.variantId),
-                new SqlParameter("@ItemName", menuItem.item_name),
-                new SqlParameter("@ItemDescription", menuItem.item_description),
-                new SqlParameter("@ImgUrl", menuItem.img_url),
-                new SqlParameter("@VariantName", menuItem.variant_name),
-                new SqlParameter("@VariantPrice", menuItem.variant_price),
-                new SqlParameter("@Quantity", menuItem.quantity),
-                new SqlParameter("@SpecialInstructions", menuItem.specialInstructions)
+                new SqlParameter("@VariantId", chosenVariant.Id),
+                new SqlParameter("@ItemName", menuItem.name),
+                new SqlParameter("@ItemDescription", menuItem.description),
+                new SqlParameter("@ImgUrl", menuItem.imgUrl),
+                new SqlParameter("@VariantName", chosenVariant.name),
+                new SqlParameter("@VariantPrice", chosenVariant.price),
+                new SqlParameter("@Quantity", 1),
+                new SqlParameter("@SpecialInstructions", specialInstructions)
                 );
 
             return await ViewCart(userId);
