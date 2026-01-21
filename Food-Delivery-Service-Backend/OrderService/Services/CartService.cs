@@ -120,51 +120,17 @@ namespace OrderService.Services
                     {
                         cart_item_id = reader.GetInt32(reader.GetOrdinal("cart_item_id")),
                         item_name = reader.GetString(reader.GetOrdinal("item_name")),
+                        item_description = reader.GetString(reader.GetOrdinal("item_description")),
                         variant_name = reader.GetString(reader.GetOrdinal("variant_name")),
                         variant_price = reader.GetDecimal(reader.GetOrdinal("variant_price")),
                         quantity = reader.GetInt32(reader.GetOrdinal("quantity")),
-                        img_url = reader.GetString(reader.GetOrdinal("img_url"))
+                        img_url = reader.GetString(reader.GetOrdinal("imgUrl")),
+                        specialInstructions = reader.GetString(reader.GetOrdinal("special_instructions"))
                     });
                 }
             }
 
             return cart;
-        }
-
-        public async Task<List<CartItemDTO>> ViewCartItems(int userId)
-        {
-            var cartItems = new List<CartItemDTO>();
-
-            /* Connection DB Process, Filling the Param, and Using a Reader/Cursor for reading each row. */
-            using var connection = _db.Database.GetDbConnection();
-            await connection.OpenAsync();
-
-            using var command = connection.CreateCommand();
-            command.CommandText = "SP_ViewCartItemsByUser";
-            command.CommandType = CommandType.StoredProcedure;
-
-            var userIdParam = command.CreateParameter();
-            userIdParam.ParameterName = "@UserId";
-            userIdParam.Value = userId;
-            command.Parameters.Add(userIdParam);
-
-            using var reader = await command.ExecuteReaderAsync();
-            /* Connection DB Process, Filling the Param, and Using a Reader/Cursor for reading each row. */
-
-            while (await reader.ReadAsync())
-            {
-                cartItems.Add(new CartItemDTO
-                {
-                    cart_item_id = reader.GetInt32(reader.GetOrdinal("cart_item_id")),
-                    item_name = reader.GetString(reader.GetOrdinal("item_name")),
-                    variant_name = reader.GetString(reader.GetOrdinal("variant_name")),
-                    variant_price = reader.GetDecimal(reader.GetOrdinal("variant_price")),
-                    quantity = reader.GetInt32(reader.GetOrdinal("quantity")),
-                    img_url = reader.GetString(reader.GetOrdinal("img_url"))
-                });
-            }
-
-            return cartItems;
         }
 
         public async Task<CartDTO?> RemoveItem(int userID, int cartItemID, int quantityToRemove)

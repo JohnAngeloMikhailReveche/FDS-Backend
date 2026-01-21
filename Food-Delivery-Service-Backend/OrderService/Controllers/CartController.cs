@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Data;
 using OrderService.Models.DTO;
+using OrderService.Services;
 
 namespace OrderService.Controllers
 {
@@ -23,13 +24,15 @@ namespace OrderService.Controllers
 
         // Add Item to Cart Endpoint
         [HttpPost("item/add")]
-        public async Task<IActionResult> AddToCart(int menuItemID, int userID)
+        public async Task<IActionResult> AddToCart(int menuItemID, int variantId, int userID, string specialInstructions)
         {
             try
             {
                 CartDTO? cart = await _cartService.AddItem(
                     menuItemID,
-                    userID
+                    variantId,
+                    userID,
+                    specialInstructions
                     );
 
                 if (cart == null)
@@ -45,7 +48,7 @@ namespace OrderService.Controllers
         }
 
         // View the Cart
-        [HttpGet("user/cart/{userId}")]
+        [HttpGet("get-cart/{userId}")]
         public async Task<IActionResult> ViewCart(int userId)
         {
             var cart = await _cartService.ViewCart(userId);
@@ -58,22 +61,8 @@ namespace OrderService.Controllers
             return Ok(cart);
         }
 
-        // View the Cart Items
-        [HttpGet("user/cart/items/{userId}")]
-        public async Task<IActionResult> ViewCartItems(int userId)
-        {
-            var cartItems = await _cartService.ViewCartItems(userId);
-
-            if (cartItems == null || !cartItems.Any())
-            {
-                return NotFound(new { message = "Cart is empty." });
-            }
-
-            return Ok(cartItems);
-        }
-
         // Remove Cart Item
-        [HttpDelete("item/{cartItemID}")]
+        [HttpDelete("remove-item/{cartItemID}")]
         public async Task<IActionResult> RemoveItemFromCart(
             [FromRoute] int cartItemID,
             [FromQuery] int userID,
@@ -90,7 +79,7 @@ namespace OrderService.Controllers
 
 
         // Increase Cart Item Quantity
-        [HttpPatch("item/{cartItemID}/increase")]
+        [HttpPatch("update/{cartItemID}/increase")]
         public async Task<IActionResult> IncreaseItemQuantity(
                 [FromRoute] int cartItemID,
                 [FromQuery] int userID,
