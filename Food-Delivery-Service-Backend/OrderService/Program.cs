@@ -5,6 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using OrderService.Data;
 using System.Text;
 using System.Text.Json.Serialization;
+using OrderService.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +57,9 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddScoped<CartService>(); // ADD THIS!
+builder.Services.AddScoped<OrderService.Services.OrderService>(); // and this
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
@@ -67,6 +72,20 @@ builder.Services.AddHttpClient("MenuService", client =>
 {
     client.BaseAddress = new Uri("https://localhost:5001");
 });
+
+builder.Services.AddHttpClient("NotificationService", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5048");
+});
+
+builder.Services.AddHttpClient("NotificationService")
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        return new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+    });
 
 //builder.Services.AddScoped<CartService>();
 builder.Services.AddControllers();

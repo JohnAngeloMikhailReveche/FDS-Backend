@@ -1,3 +1,4 @@
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Models.DTO;
@@ -6,17 +7,19 @@ using System.Security.Claims;
 
 namespace OrderService.Controllers
 {
-	[Authorize]
+	//[Authorize]
 	[ApiController]
 	[Route("api/[controller]")]
 	public class OrdersController : ControllerBase
 	{
 		private readonly OrderService.Services.OrderService _orderService;
+        private readonly HttpClient _notifService;
 
-		public OrdersController(OrderService.Services.OrderService orderService)
+        public OrdersController(OrderService.Services.OrderService orderService, IHttpClientFactory httpFactory)
 		{
 			_orderService = orderService;
-		}
+            _notifService = httpFactory.CreateClient("NotificationService");
+        }
 
         private string GetUserId()
         {
@@ -53,10 +56,21 @@ namespace OrderService.Controllers
 			}
 		}
 
-		/// <summary>
-		/// Place a new order from cart
-		/// </summary>
-		[HttpPost("place/order")]
+        [HttpGet("testconnection")]
+        public async Task<IActionResult> TestConnection()
+		{
+
+            var response = await _notifService
+                 .GetFromJsonAsync<List<UserNotif>>($"/api/notifications/users");
+
+			return Ok(response);
+
+        }
+
+        /// <summary>
+        /// Place a new order from cart
+        /// </summary>
+        [HttpPost("place/order")]
 		public async Task<IActionResult> PlaceOrder()
 		{
 
