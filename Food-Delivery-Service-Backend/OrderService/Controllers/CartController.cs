@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Cors.Infrastructure;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Data;
 using OrderService.Models.DTO;
 using OrderService.Services;
+using System.Security.Claims;
 
 namespace OrderService.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CartController : ControllerBase
@@ -20,6 +23,15 @@ namespace OrderService.Controllers
             _db = db;
             _httpFactory = httpFactory;
             _cartService = new CartService(db, httpFactory);
+        }
+
+        private string GetUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub")
+                ?? throw new UnauthorizedAccessException("User ID not found in token.");
+
+            // return "123";
         }
 
         // Add Item to Cart Endpoint
@@ -95,6 +107,9 @@ namespace OrderService.Controllers
 
             return Ok(cart);
         }
+
+
+
 
 
     }

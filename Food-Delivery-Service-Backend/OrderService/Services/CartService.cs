@@ -44,6 +44,9 @@ namespace OrderService.Services
             var chosenVariant = menuItem.variants
                 .FirstOrDefault(v => v.Id == variantId);
 
+
+
+
             if (chosenVariant == null)
             {
                 throw new Exception("Selected variant does not exist for this menu item.");
@@ -66,8 +69,8 @@ namespace OrderService.Services
                 new SqlParameter("@VariantId", chosenVariant.Id),
                 new SqlParameter("@ItemName", menuItem.name),
                 new SqlParameter("@ItemDescription", menuItem.description),
-                new SqlParameter("@ImgUrl", menuItem.imageUrl),
-                new SqlParameter("@VariantName", chosenVariant.name),
+                new SqlParameter("@ImgUrl", menuItem.imageUrl ?? string.Empty),
+                new SqlParameter("@VariantName", chosenVariant.variantName),
                 new SqlParameter("@VariantPrice", chosenVariant.price),
                 new SqlParameter("@Quantity", 1),
                 new SqlParameter("@SpecialInstructions", specialInstructions)
