@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PaymentService2</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
+  </ItemGroup>
+
+  <!-- Exclude old EF migration code from compilation -->
+  <ItemGroup>
+    <!-- Exclude old directories and EF components -->
+    <Compile Remove="Integrations\**" />
+    <Compile Remove="Migrations\*.cs" />
+    <Compile Remove="Data\DevDataSeeder.cs" />
+    <Compile Remove="Data\PaymentDbContext.cs" />
+    <Compile Remove="Controllers\OrderIntegrationController.cs" />
+    
+    <!-- Resources -->
+    <Content Remove="Integrations\**" />
+    <EmbeddedResource Remove="Integrations\**" />
+    <None Remove="Integrations\**" />
+    <None Remove="PaymentService.csproj" />
+  </ItemGroup>
+
+  <!-- Include SQL migration files and copy to output -->
+  <ItemGroup>
+    <None Include="Migrations\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
+
+
