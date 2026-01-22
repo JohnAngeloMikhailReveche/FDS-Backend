@@ -21,7 +21,7 @@ namespace OrderService.Services
         public async Task<CartDTO?> AddItem(
                 int menuId,
                 int variantId,
-                int userId,
+                string userId,
                 string specialInstructions
             )
         {
@@ -79,7 +79,7 @@ namespace OrderService.Services
             return await ViewCart(userId);
         }
 
-        public async Task<CartDTO?> ViewCart(int userId)
+        public async Task<CartDTO?> ViewCart(string userId)
         {
             CartDTO? cart = null;
 
@@ -109,7 +109,7 @@ namespace OrderService.Services
                     cart = new CartDTO
                     {
                         cart_id = reader.GetInt32(reader.GetOrdinal("cart_id")),
-                        users_id = reader.GetInt32(reader.GetOrdinal("users_id")),
+                        users_id = reader.GetString(reader.GetOrdinal("users_id")),
                         subtotal = reader.GetDecimal(reader.GetOrdinal("subtotal")),
                         updated_at = reader.GetDateTime(reader.GetOrdinal("updated_at")),
                         cartItems = new List<CartItemDTO>()
@@ -136,7 +136,7 @@ namespace OrderService.Services
             return cart;
         }
 
-        public async Task<CartDTO?> RemoveItem(int userID, int cartItemID, int quantityToRemove)
+        public async Task<CartDTO?> RemoveItem(string userID, int cartItemID, int quantityToRemove)
         {
             await _db.Database.ExecuteSqlRawAsync(
                 @"EXEC SP_RemoveItemFromCart
@@ -152,7 +152,7 @@ namespace OrderService.Services
         }
 
 
-        public async Task<CartDTO?> IncreaseItem(int userID, int cartItemID, int count)
+        public async Task<CartDTO?> IncreaseItem(string userID, int cartItemID, int count)
         {
             await _db.Database.ExecuteSqlRawAsync(
                 @"EXEC SP_IncreaseItemInCart

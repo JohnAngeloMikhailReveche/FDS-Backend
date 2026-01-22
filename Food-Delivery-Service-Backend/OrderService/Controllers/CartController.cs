@@ -34,14 +34,17 @@ namespace OrderService.Controllers
 
         // Add Item to Cart Endpoint
         [HttpPost("item/add")]
-        public async Task<IActionResult> AddToCart(int menuItemID, int variantId, int userID, string specialInstructions)
+        public async Task<IActionResult> AddToCart(int menuItemID, int variantId, string specialInstructions)
         {
+
+            var userId = GetUserId();
+
             try
             {
                 CartDTO? cart = await _cartService.AddItem(
                     menuItemID,
                     variantId,
-                    userID,
+                    userId,
                     specialInstructions
                     );
 
@@ -59,8 +62,11 @@ namespace OrderService.Controllers
 
         // View the Cart
         [HttpGet("get-cart/{userId}")]
-        public async Task<IActionResult> ViewCart(int userId)
+        public async Task<IActionResult> ViewCart()
         {
+
+            var userId = GetUserId();
+
             var cart = await _cartService.ViewCart(userId);
 
             if (cart == null)
@@ -75,11 +81,13 @@ namespace OrderService.Controllers
         [HttpDelete("remove-item/{cartItemID}")]
         public async Task<IActionResult> RemoveItemFromCart(
             [FromRoute] int cartItemID,
-            [FromQuery] int userID,
             [FromQuery] int quantityToRemove
             )
         {
-            var cart = await _cartService.RemoveItem(userID, cartItemID, quantityToRemove);
+
+            var userId = GetUserId();
+
+            var cart = await _cartService.RemoveItem(userId, cartItemID, quantityToRemove);
 
             if (cart == null)
                 return NotFound(new { message = "Item or cart is not found." });
@@ -92,11 +100,13 @@ namespace OrderService.Controllers
         [HttpPatch("update/{cartItemID}/increase")]
         public async Task<IActionResult> IncreaseItemQuantity(
                 [FromRoute] int cartItemID,
-                [FromQuery] int userID,
                 [FromQuery] int count = 1
             )
         {
-            var cart = await _cartService.IncreaseItem(userID, cartItemID, count);
+
+            var userId = GetUserId();
+
+            var cart = await _cartService.IncreaseItem(userId, cartItemID, count);
 
             if (cart == null)
             {
