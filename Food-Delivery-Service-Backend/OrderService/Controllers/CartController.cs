@@ -61,7 +61,7 @@ namespace OrderService.Controllers
         }
 
         // View the Cart
-        [HttpGet("get-cart/{userId}")]
+        [HttpGet("get-cart")]
         public async Task<IActionResult> ViewCart()
         {
 
