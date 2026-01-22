@@ -30,8 +30,6 @@ namespace OrderService.Controllers
             return User.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? User.FindFirstValue("sub")
                 ?? throw new UnauthorizedAccessException("User ID not found in token.");
-
-            // return "123";
         }
 
         // Add Item to Cart Endpoint
