@@ -60,7 +60,7 @@ namespace OrderService.Services
 
             await _db.Database.ExecuteSqlRawAsync(
                 "EXEC sp_PlaceOrder @UserId, @NewOrderId OUTPUT, @ResultMessage OUTPUT",
-                new SqlParameter("@UserId", userId),
+                new SqlParameter("@UserId", userId), 
                 newOrderId,
                 resultMessage
             );

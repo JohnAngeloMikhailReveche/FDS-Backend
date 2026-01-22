@@ -16,6 +16,9 @@ builder.Services.AddDbContext<OrderDbContext>(options =>
 
 
 
+builder.Services.AddScoped<CartService>(); // uncomment this if you need CartService
+builder.Services.AddScoped<OrderService.Services.OrderService>(); 
+
 // Add services to the container.
 //builder.Services.AddScoped<OrderStatusService>();
 
