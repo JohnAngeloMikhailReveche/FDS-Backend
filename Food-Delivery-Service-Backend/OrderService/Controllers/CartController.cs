@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Data;
 using OrderService.Models.DTO;
+using OrderService.Services;
+
 
 namespace OrderService.Controllers
 {
@@ -23,13 +25,16 @@ namespace OrderService.Controllers
 
         // Add Item to Cart Endpoint
         [HttpPost("item/add")]
-        public async Task<IActionResult> AddToCart(int menuItemID, int userID)
+        public async Task<IActionResult> AddToCart(int menuItemID, int variantID, int userID, string? specialInstructions)
+
         {
             try
             {
                 CartDTO? cart = await _cartService.AddItem(
                     menuItemID,
-                    userID
+                    variantID,
+                    userID,
+                    specialInstructions ?? ""
                     );
 
                 if (cart == null)
