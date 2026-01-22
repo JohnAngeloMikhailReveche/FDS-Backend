@@ -67,6 +67,36 @@ namespace OrderService.Controllers
 
         }
 
+
+		[HttpPost("place-order")]
+        public async Task<IActionResult> ConfirmPayment(bool Success)
+        {
+            if (!Success)
+                return StatusCode(402, new { message = "Payment failed" });
+
+            var userId = GetUserId();
+
+            try
+            {
+                var (orderId, message) = await _orderService.PlaceOrderAsync(userId);
+
+                if (orderId == 0)
+                    return BadRequest(new { message });
+
+                return Ok(new
+                {
+                    orderId,
+                    message = "Order placed successfully after payment confirmation"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+
+
         /// <summary>
         /// Called by PaymentService after payment processing
         /// </summary>
