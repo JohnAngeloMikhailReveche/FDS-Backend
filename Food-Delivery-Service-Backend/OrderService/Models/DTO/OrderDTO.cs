@@ -3,7 +3,7 @@ namespace OrderService.Models.DTO
     public class OrderDTO
     {
         public int orders_id { get; set; }
-        public int users_id { get; set; }
+        public string users_id { get; set; }
         public byte status { get; set; }
         public decimal subtotal { get; set; }
         public decimal total_cost { get; set; }

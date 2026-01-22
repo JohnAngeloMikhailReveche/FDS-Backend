@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OrderService.Services;
 using OrderService.Models.DTO;
+using OrderService.Services;
+using System.Security.Claims;
 
 namespace OrderService.Controllers
 {
+	[Authorize]
 	[ApiController]
 	[Route("api/[controller]")]
 	public class OrdersController : ControllerBase
@@ -15,14 +18,21 @@ namespace OrderService.Controllers
 			_orderService = orderService;
 		}
 
-		// ============================================
-		// CUSTOMER ENDPOINTS
-		// ============================================
+        private string GetUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub")
+                ?? throw new UnauthorizedAccessException("User ID not found in token.");
+        }
 
-		/// <summary>
-		/// Request order cancellation
-		/// </summary>
-		[HttpPatch("request-cancellation")]
+        // ============================================
+        // CUSTOMER ENDPOINTS
+        // ============================================
+
+        /// <summary>
+        /// Request order cancellation
+        /// </summary>
+        [HttpPatch("request-cancellation")]
 		public async Task<IActionResult> RequestCancellation([FromBody] CancellationRequestDto request)
 		{
 			if (request == null || string.IsNullOrWhiteSpace(request.Reason))
@@ -47,8 +57,11 @@ namespace OrderService.Controllers
 		/// Place a new order from cart
 		/// </summary>
 		[HttpPost("place/order/{userId}")]
-		public async Task<IActionResult> PlaceOrder(int userId)
+		public async Task<IActionResult> PlaceOrder()
 		{
+
+			var userId = GetUserId();
+
 			try
 			{
 				var (orderId, message) = await _orderService.PlaceOrderAsync(userId);
@@ -119,11 +132,13 @@ namespace OrderService.Controllers
 		/// </summary>
 		[HttpGet("history/{userId}")]
 		public async Task<IActionResult> GetOrderHistory(
-			int userId,
 			[FromQuery] string filter = "all",
 			[FromQuery] string sortOrder = "newest")
 		{
-			try
+
+            var userId = GetUserId();
+
+            try
 			{
 				var orders = await _orderService.GetOrderHistoryAsync(userId, filter, sortOrder);
 

@@ -3,7 +3,7 @@
     public class OrderHistoryDTO
     {
         public int orders_id { get; set; }
-        public int users_id { get; set; }
+        public string users_id { get; set; }
         public decimal total_cost { get; set; }
         public DateTime placed_at { get; set; }
         public DateTime? fulfilled_at { get; set; }
