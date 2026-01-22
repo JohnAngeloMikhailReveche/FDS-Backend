@@ -21,7 +21,7 @@ namespace OrderService.Services
         public async Task<CartDTO?> AddItem(
                 int menuId,
                 int variantId,
-                int userId,
+                string userId,
                 string specialInstructions
             )
         {
@@ -43,6 +43,9 @@ namespace OrderService.Services
             // Get the Variant request from the frontend and check if the menuClient has it then map it towards the variant name, variant price and variant id.
             var chosenVariant = menuItem.variants
                 .FirstOrDefault(v => v.Id == variantId);
+
+
+
 
             if (chosenVariant == null)
             {
@@ -66,8 +69,8 @@ namespace OrderService.Services
                 new SqlParameter("@VariantId", chosenVariant.Id),
                 new SqlParameter("@ItemName", menuItem.name),
                 new SqlParameter("@ItemDescription", menuItem.description),
-                new SqlParameter("@ImgUrl", menuItem.imageUrl),
-                new SqlParameter("@VariantName", chosenVariant.name),
+                new SqlParameter("@ImgUrl", menuItem.imageUrl ?? string.Empty),
+                new SqlParameter("@VariantName", chosenVariant.variantName),
                 new SqlParameter("@VariantPrice", chosenVariant.price),
                 new SqlParameter("@Quantity", 1),
                 new SqlParameter("@SpecialInstructions", specialInstructions)
@@ -76,7 +79,7 @@ namespace OrderService.Services
             return await ViewCart(userId);
         }
 
-        public async Task<CartDTO?> ViewCart(int userId)
+        public async Task<CartDTO?> ViewCart(string userId)
         {
             CartDTO? cart = null;
 
@@ -106,7 +109,7 @@ namespace OrderService.Services
                     cart = new CartDTO
                     {
                         cart_id = reader.GetInt32(reader.GetOrdinal("cart_id")),
-                        users_id = reader.GetInt32(reader.GetOrdinal("users_id")),
+                        users_id = reader.GetString(reader.GetOrdinal("users_id")),
                         subtotal = reader.GetDecimal(reader.GetOrdinal("subtotal")),
                         updated_at = reader.GetDateTime(reader.GetOrdinal("updated_at")),
                         cartItems = new List<CartItemDTO>()
@@ -133,7 +136,7 @@ namespace OrderService.Services
             return cart;
         }
 
-        public async Task<CartDTO?> RemoveItem(int userID, int cartItemID, int quantityToRemove)
+        public async Task<CartDTO?> RemoveItem(string userID, int cartItemID, int quantityToRemove)
         {
             await _db.Database.ExecuteSqlRawAsync(
                 @"EXEC SP_RemoveItemFromCart
@@ -149,7 +152,7 @@ namespace OrderService.Services
         }
 
 
-        public async Task<CartDTO?> IncreaseItem(int userID, int cartItemID, int count)
+        public async Task<CartDTO?> IncreaseItem(string userID, int cartItemID, int count)
         {
             await _db.Database.ExecuteSqlRawAsync(
                 @"EXEC SP_IncreaseItemInCart

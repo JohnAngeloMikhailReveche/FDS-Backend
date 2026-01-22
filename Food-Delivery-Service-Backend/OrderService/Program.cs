@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using OrderService.Data;
-using OrderService.Services; 
 using System.Text;
 using System.Text.Json.Serialization;
+using OrderService.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,15 +14,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 
-builder.Services.AddScoped<CartService>(); // ADD THIS!
-builder.Services.AddScoped<OrderService.Services.OrderService>(); // and this
+
 
 builder.Services.AddScoped<CartService>(); // uncomment this if you need CartService
 builder.Services.AddScoped<OrderService.Services.OrderService>(); 
 
 // Add services to the container.
 //builder.Services.AddScoped<OrderStatusService>();
+
 builder.Services.AddControllers().AddJsonOptions(x =>
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
@@ -30,6 +32,7 @@ builder.Services.AddSwaggerGen();
 // Configure JWT AUTH
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "OrderService";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "OrderService";
+
 var jwtKey = builder.Configuration["Jwt:Key"];
 
 if (string.IsNullOrEmpty(jwtKey))
@@ -57,6 +60,9 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddScoped<CartService>(); // ADD THIS!
+builder.Services.AddScoped<OrderService.Services.OrderService>(); // and this
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
@@ -64,13 +70,29 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
+
 builder.Services.AddHttpClient("MenuService", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7280");
+    client.BaseAddress = new Uri("https://localhost:5001");
 });
 
-//builder.Services.AddScoped<CartService>(); 
+builder.Services.AddHttpClient("NotificationService", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5048");
+});
+
+builder.Services.AddHttpClient("NotificationService")
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        return new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+    });
+
+//builder.Services.AddScoped<CartService>();
 builder.Services.AddControllers();
+
 
 var app = builder.Build();
 
@@ -82,8 +104,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAll");
+
 app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseHttpsRedirection();
-app.UseAuthorization(); 
+
+app.UseAuthorization();
+
 app.MapControllers();
+
 app.Run();

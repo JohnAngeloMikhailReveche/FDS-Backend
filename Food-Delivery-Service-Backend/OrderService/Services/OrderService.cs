@@ -41,7 +41,7 @@ namespace OrderService.Services
         // ============================================
         // 2. PLACE ORDER
         // ============================================
-        public async Task<(int orderId, string message)> PlaceOrderAsync(string userId) 
+        public async Task<(int orderId, string message)> PlaceOrderAsync(string userId)
         {
             var newOrderId = new SqlParameter
             {
@@ -70,6 +70,7 @@ namespace OrderService.Services
 
             return (orderIdValue, message);
         }
+
 
         // ============================================
         // 3. UPDATE ORDER STATUS
@@ -152,7 +153,7 @@ namespace OrderService.Services
         // ============================================
         // 5. GET ORDER HISTORY
         // ============================================
-        public async Task<List<OrderHistoryDTO>> GetOrderHistoryAsync(string userId, string filter, string sortOrder)
+        public async Task<List<OrderHistoryDTO>> GetOrderHistoryAsync(string? userId, string filter, string sortOrder)
         {
             var orders = new List<OrderHistoryDTO>();
 
@@ -165,7 +166,7 @@ namespace OrderService.Services
 
             var userIdParam = command.CreateParameter();
             userIdParam.ParameterName = "@UserId";
-            userIdParam.Value = !string.IsNullOrEmpty(userId) ? (object)userId : DBNull.Value;
+            userIdParam.Value = string.IsNullOrEmpty(userId) ? DBNull.Value : (object)userId;
             command.Parameters.Add(userIdParam);
 
             var filterParam = command.CreateParameter();

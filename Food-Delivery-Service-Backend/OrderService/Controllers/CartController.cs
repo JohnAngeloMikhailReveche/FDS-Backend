@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Cors.Infrastructure;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Data;
 using OrderService.Models.DTO;
 using OrderService.Services;
+using System.Security.Claims;
 
 namespace OrderService.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CartController : ControllerBase
@@ -22,16 +25,26 @@ namespace OrderService.Controllers
             _cartService = new CartService(db, httpFactory);
         }
 
+        private string GetUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub")
+                ?? throw new UnauthorizedAccessException("User ID not found in token.");
+        }
+
         // Add Item to Cart Endpoint
         [HttpPost("item/add")]
-        public async Task<IActionResult> AddToCart(int menuItemID, int variantId, int userID, string specialInstructions)
+        public async Task<IActionResult> AddToCart(int menuItemID, int variantId, string specialInstructions)
         {
+
+            var userId = GetUserId();
+
             try
             {
                 CartDTO? cart = await _cartService.AddItem(
                     menuItemID,
                     variantId,
-                    userID,
+                    userId,
                     specialInstructions
                     );
 
@@ -48,9 +61,12 @@ namespace OrderService.Controllers
         }
 
         // View the Cart
-        [HttpGet("get-cart/{userId}")]
-        public async Task<IActionResult> ViewCart(int userId)
+        [HttpGet("get-cart")]
+        public async Task<IActionResult> ViewCart()
         {
+
+            var userId = GetUserId();
+
             var cart = await _cartService.ViewCart(userId);
 
             if (cart == null)
@@ -65,11 +81,13 @@ namespace OrderService.Controllers
         [HttpDelete("remove-item/{cartItemID}")]
         public async Task<IActionResult> RemoveItemFromCart(
             [FromRoute] int cartItemID,
-            [FromQuery] int userID,
             [FromQuery] int quantityToRemove
             )
         {
-            var cart = await _cartService.RemoveItem(userID, cartItemID, quantityToRemove);
+
+            var userId = GetUserId();
+
+            var cart = await _cartService.RemoveItem(userId, cartItemID, quantityToRemove);
 
             if (cart == null)
                 return NotFound(new { message = "Item or cart is not found." });
@@ -82,11 +100,13 @@ namespace OrderService.Controllers
         [HttpPatch("update/{cartItemID}/increase")]
         public async Task<IActionResult> IncreaseItemQuantity(
                 [FromRoute] int cartItemID,
-                [FromQuery] int userID,
                 [FromQuery] int count = 1
             )
         {
-            var cart = await _cartService.IncreaseItem(userID, cartItemID, count);
+
+            var userId = GetUserId();
+
+            var cart = await _cartService.IncreaseItem(userId, cartItemID, count);
 
             if (cart == null)
             {
@@ -95,6 +115,9 @@ namespace OrderService.Controllers
 
             return Ok(cart);
         }
+
+
+
 
 
     }

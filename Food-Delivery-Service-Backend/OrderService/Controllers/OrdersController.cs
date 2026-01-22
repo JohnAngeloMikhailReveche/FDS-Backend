@@ -1,28 +1,41 @@
+using Azure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OrderService.Services;
 using OrderService.Models.DTO;
+using OrderService.Services;
+using System.Security.Claims;
 
 namespace OrderService.Controllers
 {
+	[Authorize]
 	[ApiController]
 	[Route("api/[controller]")]
 	public class OrdersController : ControllerBase
 	{
 		private readonly OrderService.Services.OrderService _orderService;
+        private readonly HttpClient _notifService;
 
-		public OrdersController(OrderService.Services.OrderService orderService)
+        public OrdersController(OrderService.Services.OrderService orderService, IHttpClientFactory httpFactory)
 		{
 			_orderService = orderService;
-		}
+            _notifService = httpFactory.CreateClient("NotificationService");
+        }
 
-		// ============================================
-		// CUSTOMER ENDPOINTS
-		// ============================================
+        private string GetUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub")
+                ?? throw new UnauthorizedAccessException("User ID not found in token.");
+        }
 
-		/// <summary>
-		/// Request order cancellation
-		/// </summary>
-		[HttpPatch("request-cancellation")]
+        // ============================================
+        // CUSTOMER ENDPOINTS
+        // ============================================
+
+        /// <summary>
+        /// Request order cancellation
+        /// </summary>
+        [HttpPatch("request-cancellation")]
 		public async Task<IActionResult> RequestCancellation([FromBody] CancellationRequestDto request)
 		{
 			if (request == null || string.IsNullOrWhiteSpace(request.Reason))
@@ -43,31 +56,81 @@ namespace OrderService.Controllers
 			}
 		}
 
-		/// <summary>
-		/// Place a new order from cart
-		/// </summary>
-		[HttpPost("place/order/{userId}")]
-		public async Task<IActionResult> PlaceOrder(string userId)
+        [HttpGet("testconnection")]
+        public async Task<IActionResult> TestConnection()
 		{
-			try
-			{
-				var (orderId, message) = await _orderService.PlaceOrderAsync(userId);
 
-				if (orderId == 0)
-					return BadRequest(new { message });
+            var response = await _notifService
+                 .GetFromJsonAsync<List<UserNotif>>($"/api/notifications/users");
 
-				return Ok(new { orderId, message });
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(500, new { message = ex.Message });
-			}
-		}
+			return Ok(response);
 
-		/// <summary>
-		/// Get order details with items
-		/// </summary>
-		[HttpGet("{orderId}/items")]
+        }
+
+
+		[HttpPost("place-order")]
+        public async Task<IActionResult> ConfirmPayment(bool Success)
+        {
+            if (!Success)
+                return StatusCode(402, new { message = "Payment failed" });
+
+            var userId = GetUserId();
+
+            try
+            {
+                var (orderId, message) = await _orderService.PlaceOrderAsync(userId);
+
+                if (orderId == 0)
+                    return BadRequest(new { message });
+
+                return Ok(new
+                {
+                    orderId,
+                    message = "Order placed successfully after payment confirmation"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+
+
+        /// <summary>
+        /// Called by PaymentService after payment processing
+        /// </summary>
+        [HttpPost("payments/confirm")]
+        public async Task<IActionResult> ConfirmPayment(bool Success)
+        {
+            if (!Success)
+                return StatusCode(402, new { message = "Payment failed" });
+
+            var userId = GetUserId();
+
+            try
+            {
+                var (orderId, message) = await _orderService.PlaceOrderAsync(userId);
+
+                if (orderId == 0)
+                    return BadRequest(new { message });
+
+                return Ok(new
+                {
+                    orderId,
+                    message = "Order placed successfully after payment confirmation"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get order details with items
+        /// </summary>
+        [HttpGet("{orderId}/items")]
 		public async Task<IActionResult> GetOrderDetails(int orderId)
 		{
 			try
@@ -117,13 +180,15 @@ namespace OrderService.Controllers
 		/// <summary>
 		/// Get order history for a user
 		/// </summary>
-		[HttpGet("history/{userId}")]
+		[HttpGet("history")]
 		public async Task<IActionResult> GetOrderHistory(
-			string userId,
 			[FromQuery] string filter = "all",
 			[FromQuery] string sortOrder = "newest")
 		{
-			try
+
+            var userId = GetUserId();
+
+            try
 			{
 				var orders = await _orderService.GetOrderHistoryAsync(userId, filter, sortOrder);
 

@@ -1,0 +1,7 @@
+USE OrderDatabase
+
+ALTER TABLE Cart
+ALTER COLUMN users_id NVARCHAR(255);
+
+ALTER TABLE Orders
+ALTER COLUMN users_id NVARCHAR(255);
