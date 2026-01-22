@@ -47,7 +47,7 @@ namespace OrderService.Controllers
 		/// Place a new order from cart
 		/// </summary>
 		[HttpPost("place/order/{userId}")]
-		public async Task<IActionResult> PlaceOrder(int userId)
+		public async Task<IActionResult> PlaceOrder(string userId)
 		{
 			try
 			{
@@ -119,7 +119,7 @@ namespace OrderService.Controllers
 		/// </summary>
 		[HttpGet("history/{userId}")]
 		public async Task<IActionResult> GetOrderHistory(
-			int userId,
+			string userId,
 			[FromQuery] string filter = "all",
 			[FromQuery] string sortOrder = "newest")
 		{

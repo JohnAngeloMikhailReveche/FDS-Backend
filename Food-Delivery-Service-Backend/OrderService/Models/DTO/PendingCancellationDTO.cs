@@ -3,7 +3,7 @@
     public class PendingCancellationDTO
     {
         public int orders_id { get; set; }
-        public int users_id { get; set; }
+        public string users_id { get; set; }
         public string? cancellation_reason { get; set; }
         public int item_count { get; set; }
         public string Status { get; set; }

@@ -41,7 +41,7 @@ namespace OrderService.Services
         // ============================================
         // 2. PLACE ORDER
         // ============================================
-        public async Task<(int orderId, string message)> PlaceOrderAsync(int userId)
+        public async Task<(int orderId, string message)> PlaceOrderAsync(string userId) 
         {
             var newOrderId = new SqlParameter
             {
@@ -60,7 +60,7 @@ namespace OrderService.Services
 
             await _db.Database.ExecuteSqlRawAsync(
                 "EXEC sp_PlaceOrder @UserId, @NewOrderId OUTPUT, @ResultMessage OUTPUT",
-                new SqlParameter("@UserId", userId),
+                new SqlParameter("@UserId", userId), 
                 newOrderId,
                 resultMessage
             );
@@ -152,7 +152,7 @@ namespace OrderService.Services
         // ============================================
         // 5. GET ORDER HISTORY
         // ============================================
-        public async Task<List<OrderHistoryDTO>> GetOrderHistoryAsync(int? userId, string filter, string sortOrder)
+        public async Task<List<OrderHistoryDTO>> GetOrderHistoryAsync(string userId, string filter, string sortOrder)
         {
             var orders = new List<OrderHistoryDTO>();
 
@@ -165,7 +165,7 @@ namespace OrderService.Services
 
             var userIdParam = command.CreateParameter();
             userIdParam.ParameterName = "@UserId";
-            userIdParam.Value = userId.HasValue ? (object)userId.Value : DBNull.Value;
+            userIdParam.Value = !string.IsNullOrEmpty(userId) ? (object)userId : DBNull.Value;
             command.Parameters.Add(userIdParam);
 
             var filterParam = command.CreateParameter();
@@ -185,7 +185,7 @@ namespace OrderService.Services
                 orders.Add(new OrderHistoryDTO
                 {
                     orders_id = reader.GetInt32(reader.GetOrdinal("orders_id")),
-                    users_id = reader.GetInt32(reader.GetOrdinal("users_id")),
+                    users_id = reader.GetString(reader.GetOrdinal("users_id")),
                     total_cost = reader.GetDecimal(reader.GetOrdinal("total_cost")),
                     placed_at = reader.GetDateTime(reader.GetOrdinal("placed_at")),
                     fulfilled_at = reader.IsDBNull(reader.GetOrdinal("fulfilled_at")) ? null : reader.GetDateTime(reader.GetOrdinal("fulfilled_at")),
@@ -222,7 +222,7 @@ namespace OrderService.Services
                 cancellations.Add(new PendingCancellationDTO
                 {
                     orders_id = reader.GetInt32(reader.GetOrdinal("orders_id")),
-                    users_id = reader.GetInt32(reader.GetOrdinal("users_id")),
+                    users_id = reader.GetString(reader.GetOrdinal("users_id")),
                     cancellation_reason = reader.IsDBNull(reader.GetOrdinal("cancellation_reason")) ? null : reader.GetString(reader.GetOrdinal("cancellation_reason")),
                     item_count = reader.GetInt32(reader.GetOrdinal("item_count")),
                     Status = reader.GetString(reader.GetOrdinal("Status")),
